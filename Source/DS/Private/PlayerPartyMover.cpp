@@ -157,6 +157,7 @@ bool APlayerPartyMover::AllocatePlayerCapsule(UPlayerCharacterInstanceComponent*
 		{
 			CapsuleSlots[FlatIndex] = Player;
 			PlayerToSlot.Add(Player, FlatIndex);
+			OnCapsuleAllocated.Broadcast(Player);
 			return true;
 		}
 	}
@@ -172,6 +173,7 @@ void APlayerPartyMover::DeallocatePlayerCapsule(UPlayerCharacterInstanceComponen
 	{
 		CapsuleSlots[*FlatIndex] = nullptr;
 		PlayerToSlot.Remove(Player);
+		OnCapsuleDeallocated.Broadcast(Player);
 	}
 }
 

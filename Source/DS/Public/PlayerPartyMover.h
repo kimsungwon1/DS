@@ -13,6 +13,9 @@ class UPlayerCharacterInstanceComponent;
 class UPlayerPartyManagerComponent;
 class ADSPlayerController;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCapsuleAllocated, UPlayerCharacterInstanceComponent*, Player);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCapsuleDeallocated, UPlayerCharacterInstanceComponent*, Player);
+
 UCLASS(BlueprintType, Blueprintable)
 class DS_API APlayerPartyMover : public ABaseCharacter
 {
@@ -55,6 +58,12 @@ public:
 	int32 GetPlayerCapsuleIndex(const UPlayerCharacterInstanceComponent* Player) const;
 
 	ADSParty* GetParty();
+
+	UPROPERTY(BlueprintAssignable, Category = "Capsule")
+	FOnCapsuleAllocated OnCapsuleAllocated;
+
+	UPROPERTY(BlueprintAssignable, Category = "Capsule")
+	FOnCapsuleDeallocated OnCapsuleDeallocated;
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
