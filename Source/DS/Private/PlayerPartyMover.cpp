@@ -177,6 +177,22 @@ void APlayerPartyMover::DeallocatePlayerCapsule(UPlayerCharacterInstanceComponen
 	}
 }
 
+void APlayerPartyMover::SwapPlayerCapsule(UPlayerCharacterInstanceComponent* A, UPlayerCharacterInstanceComponent* B)
+{
+	if (!A || !B || A == B) return;
+
+	int32* SlotA = PlayerToSlot.Find(A);
+	int32* SlotB = PlayerToSlot.Find(B);
+	if (!SlotA || !SlotB) return;
+
+	CapsuleSlots[*SlotA] = B;
+	CapsuleSlots[*SlotB] = A;
+	Swap(*SlotA, *SlotB);
+
+	OnCapsuleAllocated.Broadcast(A);
+	OnCapsuleAllocated.Broadcast(B);
+}
+
 FVector APlayerPartyMover::GetPlayerLocation(const UPlayerCharacterInstanceComponent* Player) const
 {
 	if (!Player) return GetActorLocation();

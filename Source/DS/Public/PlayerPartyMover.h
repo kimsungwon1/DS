@@ -49,6 +49,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeallocatePlayerCapsule(UPlayerCharacterInstanceComponent* Player);
 
+	/** 두 플레이어의 캡슐 위치를 교환합니다. 둘 다 할당된 상태여야 합니다. */
+	UFUNCTION(BlueprintCallable)
+	void SwapPlayerCapsule(UPlayerCharacterInstanceComponent* A, UPlayerCharacterInstanceComponent* B);
+
 	/** 플레이어가 서야 할 월드 위치를 반환합니다. */
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FVector GetPlayerLocation(const UPlayerCharacterInstanceComponent* Player) const;
