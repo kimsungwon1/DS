@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CharacterInstanceComponent.h"
+#include "DSVoiceSet.h"
 #include "PlayerCharacterInstanceComponent.generated.h"
 
 class APlayerPartyMover;
@@ -75,6 +76,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	int pcIndex;
+
+	// 이 캐릭터의 음성 세트. 다른 캐릭터와 공유 가능
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice")
+	TObjectPtr<UDSVoiceSet> VoiceSet;
 
 private:
 	APlayerPartyMover* partyMover;
