@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerPartyMover.h"
 #include "PlayerCharacterInstanceComponent.h"
@@ -106,8 +106,8 @@ ADSPlayerController* APlayerPartyMover::GetDSController()
 {
 	if (!dsPlayerController)
 	{
-		if (AController* Controller = GetController())
-			dsPlayerController = Cast<ADSPlayerController>(Controller);
+		if (AController* cont = GetController())
+			dsPlayerController = Cast<ADSPlayerController>(cont);
 	}
 	return dsPlayerController.Get();
 }
@@ -157,7 +157,7 @@ bool APlayerPartyMover::AllocatePlayerCapsule(UPlayerCharacterInstanceComponent*
 		{
 			CapsuleSlots[FlatIndex] = Player;
 			PlayerToSlot.Add(Player, FlatIndex);
-			OnCapsuleAllocated.Broadcast(Player);
+			OnCapsuleAllocated.Broadcast(Player, CapsuleIndex, Si);
 			return true;
 		}
 	}
@@ -171,9 +171,11 @@ void APlayerPartyMover::DeallocatePlayerCapsule(UPlayerCharacterInstanceComponen
 
 	if (const int32* FlatIndex = PlayerToSlot.Find(Player))
 	{
+		const int32 CapsuleIndex = *FlatIndex / PlayersPerCapsule;
+		const int32 SlotIndex = *FlatIndex % PlayersPerCapsule;
 		CapsuleSlots[*FlatIndex] = nullptr;
 		PlayerToSlot.Remove(Player);
-		OnCapsuleDeallocated.Broadcast(Player);
+		OnCapsuleDeallocated.Broadcast(Player, CapsuleIndex, SlotIndex);
 	}
 }
 
@@ -189,8 +191,9 @@ void APlayerPartyMover::SwapPlayerCapsule(UPlayerCharacterInstanceComponent* A, 
 	CapsuleSlots[*SlotB] = A;
 	Swap(*SlotA, *SlotB);
 
-	OnCapsuleAllocated.Broadcast(A);
-	OnCapsuleAllocated.Broadcast(B);
+	// Swap 후 SlotA/SlotB 포인터가 가리키는 값이 교환됐으므로 새 위치 기준으로 브로드캐스트
+	OnCapsuleAllocated.Broadcast(A, *SlotA / PlayersPerCapsule, *SlotA % PlayersPerCapsule);
+	OnCapsuleAllocated.Broadcast(B, *SlotB / PlayersPerCapsule, *SlotB % PlayersPerCapsule);
 }
 
 FVector APlayerPartyMover::GetPlayerLocation(const UPlayerCharacterInstanceComponent* Player) const

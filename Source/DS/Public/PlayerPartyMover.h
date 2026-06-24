@@ -13,8 +13,8 @@ class UPlayerCharacterInstanceComponent;
 class UPlayerPartyManagerComponent;
 class ADSPlayerController;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCapsuleAllocated, UPlayerCharacterInstanceComponent*, Player);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCapsuleDeallocated, UPlayerCharacterInstanceComponent*, Player);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCapsuleAllocated, UPlayerCharacterInstanceComponent*, Player, int32, CapsuleIndex, int32, SlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCapsuleDeallocated, UPlayerCharacterInstanceComponent*, Player, int32, CapsuleIndex, int32, SlotIndex);
 
 UCLASS(BlueprintType, Blueprintable)
 class DS_API APlayerPartyMover : public ABaseCharacter
