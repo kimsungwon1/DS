@@ -89,6 +89,18 @@ ADSPlayerController* UPlayerPartyManagerComponent::GetDSController()
 	return nullptr;
 }
 
+void UPlayerPartyManagerComponent::NotifyMemberDied(UPlayerCharacterInstanceComponent* Player)
+{
+	if (Player)
+		OnPartyMemberDied.Broadcast(Player);
+}
+
+void UPlayerPartyManagerComponent::NotifyMemberLeft(UPlayerCharacterInstanceComponent* Player)
+{
+	if (Player)
+		OnPartyMemberLeft.Broadcast(Player);
+}
+
 void UPlayerPartyManagerComponent::initializeParty_default()
 {
 

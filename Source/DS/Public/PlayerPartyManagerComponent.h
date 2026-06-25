@@ -8,6 +8,10 @@
 
 class ADSPlayerParty;
 class APlayerPartyMover;
+class UPlayerCharacterInstanceComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartyMemberDied, UPlayerCharacterInstanceComponent*, Player);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartyMemberLeft, UPlayerCharacterInstanceComponent*, Player);
 
 UENUM(BlueprintType)
 enum class ECharactersSpawnType : uint8
@@ -44,6 +48,20 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "RPG")
 	TObjectPtr<ADSPlayerParty> partyObject;
+
+	/** 파티원이 사망했을 때 */
+	UPROPERTY(BlueprintAssignable, Category = "Party")
+	FOnPartyMemberDied OnPartyMemberDied;
+
+	/** 파티원이 파티를 떠났을 때 */
+	UPROPERTY(BlueprintAssignable, Category = "Party")
+	FOnPartyMemberLeft OnPartyMemberLeft;
+
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	void NotifyMemberDied(UPlayerCharacterInstanceComponent* Player);
+
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	void NotifyMemberLeft(UPlayerCharacterInstanceComponent* Player);
 
 #pragma region HelperFunctions
 private:
