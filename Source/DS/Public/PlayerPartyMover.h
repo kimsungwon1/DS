@@ -38,12 +38,14 @@ public:
 
 	/**
 	 * 플레이어를 캡슐 슬롯에 할당합니다.
-	 * @param Player  할당할 플레이어 컴포넌트
+	 * @param Player        할당할 플레이어 컴포넌트
 	 * @param CapsuleIndex  0=중앙, 1=앞, 2=오른쪽, 3=뒤, 4=왼쪽. -1이면 자동 선택
+	 * @param OutCapsuleIndex  할당된 캡슐 인덱스 (실패 시 -1)
+	 * @param OutSlotIndex     할당된 슬롯 인덱스 (실패 시 -1)
 	 * @return 성공 여부 (슬롯이 꽉 찼으면 false)
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool AllocatePlayerCapsule(UPlayerCharacterInstanceComponent* Player, int32 CapsuleIndex = -1);
+	bool AllocatePlayerCapsule(UPlayerCharacterInstanceComponent* Player, int32 CapsuleIndex, int32& OutCapsuleIndex, int32& OutSlotIndex);
 
 	/** 플레이어의 슬롯 할당을 해제합니다. */
 	UFUNCTION(BlueprintCallable)

@@ -134,8 +134,11 @@ int32 APlayerPartyMover::FindBestCapsule() const
 	return BestIndex;
 }
 
-bool APlayerPartyMover::AllocatePlayerCapsule(UPlayerCharacterInstanceComponent* Player, int32 CapsuleIndex)
+bool APlayerPartyMover::AllocatePlayerCapsule(UPlayerCharacterInstanceComponent* Player, int32 CapsuleIndex, int32& OutCapsuleIndex, int32& OutSlotIndex)
 {
+	OutCapsuleIndex = -1;
+	OutSlotIndex = -1;
+
 	if (!Player) return false;
 
 	// 이미 할당돼 있으면 먼저 해제
@@ -157,6 +160,8 @@ bool APlayerPartyMover::AllocatePlayerCapsule(UPlayerCharacterInstanceComponent*
 		{
 			CapsuleSlots[FlatIndex] = Player;
 			PlayerToSlot.Add(Player, FlatIndex);
+			OutCapsuleIndex = CapsuleIndex;
+			OutSlotIndex = Si;
 			OnCapsuleAllocated.Broadcast(Player, CapsuleIndex, Si);
 			return true;
 		}
