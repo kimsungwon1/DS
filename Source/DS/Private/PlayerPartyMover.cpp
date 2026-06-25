@@ -201,6 +201,19 @@ void APlayerPartyMover::SwapPlayerCapsule(UPlayerCharacterInstanceComponent* A, 
 	OnCapsuleAllocated.Broadcast(B, *SlotB / PlayersPerCapsule, *SlotB % PlayersPerCapsule);
 }
 
+int32 APlayerPartyMover::GetCapsulePlayerCount(int32 CapsuleIndex) const
+{
+	if (CapsuleIndex < 0 || CapsuleIndex >= NumCapsules) return 0;
+
+	int32 Count = 0;
+	for (int32 Si = 0; Si < PlayersPerCapsule; Si++)
+	{
+		if (CapsuleSlots[CapsuleIndex * PlayersPerCapsule + Si] != nullptr)
+			Count++;
+	}
+	return Count;
+}
+
 FVector APlayerPartyMover::GetPlayerLocation(const UPlayerCharacterInstanceComponent* Player) const
 {
 	if (!Player) return GetActorLocation();

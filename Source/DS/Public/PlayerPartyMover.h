@@ -63,6 +63,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	int32 GetPlayerCapsuleIndex(const UPlayerCharacterInstanceComponent* Player) const;
 
+	/** 해당 캡슐에 현재 할당된 플레이어 수를 반환합니다. */
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	int32 GetCapsulePlayerCount(int32 CapsuleIndex) const;
+
 	ADSParty* GetParty();
 
 	UPROPERTY(BlueprintAssignable, Category = "Capsule")
