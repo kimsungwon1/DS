@@ -214,6 +214,19 @@ int32 APlayerPartyMover::GetCapsulePlayerCount(int32 CapsuleIndex) const
 	return Count;
 }
 
+TArray<int32> APlayerPartyMover::GetCapsulePlayerIndices(int32 CapsuleIndex) const
+{
+	TArray<int32> Result;
+	if (CapsuleIndex < 0 || CapsuleIndex >= NumCapsules) return Result;
+
+	for (int32 Si = 0; Si < PlayersPerCapsule; Si++)
+	{
+		if (UPlayerCharacterInstanceComponent* Player = CapsuleSlots[CapsuleIndex * PlayersPerCapsule + Si].Get())
+			Result.Add(Player->GetPartyIndex());
+	}
+	return Result;
+}
+
 FVector APlayerPartyMover::GetPlayerLocation(const UPlayerCharacterInstanceComponent* Player) const
 {
 	if (!Player) return GetActorLocation();

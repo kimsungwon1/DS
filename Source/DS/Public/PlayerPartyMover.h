@@ -67,6 +67,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	int32 GetCapsulePlayerCount(int32 CapsuleIndex) const;
 
+	/** 해당 캡슐에 할당된 플레이어들의 pcIndex 목록을 반환합니다. */
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	TArray<int32> GetCapsulePlayerIndices(int32 CapsuleIndex) const;
+
 	ADSParty* GetParty();
 
 	UPROPERTY(BlueprintAssignable, Category = "Capsule")
