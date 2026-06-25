@@ -8,6 +8,8 @@
 #include "Components/CapsuleComponent.h"
 #include "DSPlayerController.h"
 #include "DSPlayerParty.h"
+#include "DSParty.h"
+#include "CharacterInstanceComponent.h"
 
 // 캡슐별 상하좌우 위치 (로컬 좌표, Z=0)
 static const FVector CapsuleLocalPositions[5] =
@@ -225,6 +227,20 @@ TArray<int32> APlayerPartyMover::GetCapsulePlayerIndices(int32 CapsuleIndex) con
 			Result.Add(Player->GetPartyIndex());
 	}
 	return Result;
+}
+
+UPlayerCharacterInstanceComponent* APlayerPartyMover::GetPartyMemberByIndex(int32 PcIndex) const
+{
+	ADSParty* Party = playerCharacterManager->partyObject;
+	if (!Party) return nullptr;
+
+	for (UCharacterInstanceComponent* Member : Party->GetCharacters())
+	{
+		UPlayerCharacterInstanceComponent* PC = Cast<UPlayerCharacterInstanceComponent>(Member);
+		if (PC && PC->GetPartyIndex() == PcIndex)
+			return PC;
+	}
+	return nullptr;
 }
 
 FVector APlayerPartyMover::GetPlayerLocation(const UPlayerCharacterInstanceComponent* Player) const

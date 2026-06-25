@@ -71,6 +71,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<int32> GetCapsulePlayerIndices(int32 CapsuleIndex) const;
 
+	/** pcIndex로 파티원 컴포넌트를 반환합니다. 없으면 nullptr */
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UPlayerCharacterInstanceComponent* GetPartyMemberByIndex(int32 PcIndex) const;
+
 	ADSParty* GetParty();
 
 	UPROPERTY(BlueprintAssignable, Category = "Capsule")
