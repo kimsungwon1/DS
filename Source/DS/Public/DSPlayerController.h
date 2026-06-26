@@ -146,6 +146,7 @@ private:
 	bool bIsCameraReturning = false;
 	FTimerHandle CameraReturnTimerHandle;
 
+	TWeakObjectPtr<AActor> FocusTarget;
 	FRotator FocusTargetRotation;
 	FRotator FocusOriginalRotation;
 	float FocusBlendSpeed = 5.f;

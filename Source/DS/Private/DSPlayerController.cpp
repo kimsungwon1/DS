@@ -298,24 +298,25 @@ void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float Ble
 	FRotator CamRot;
 	GetPlayerViewPoint(CamLoc, CamRot);
 
-	FocusTargetRotation = (Target->GetActorLocation() - CamLoc).Rotation();
+	FocusTarget = Target;
 	if (!bIsCameraFocused)
 		FocusOriginalRotation = CamRot;
 	FocusBlendSpeed = BlendSpeed;
 	bIsCameraFocused = true;
 	bIsCameraReturning = false;
 
-	// Duration 후 자동 복귀
-	GetWorldTimerManager().SetTimer(CameraReturnTimerHandle, [this]()
-	{
-		ReturnCamera();
-	}, Duration, false);
+	// // Duration 후 자동 복귀
+	// GetWorldTimerManager().SetTimer(CameraReturnTimerHandle, [this]()
+	// {
+	// 	ReturnCamera();
+	// }, Duration, false);
 }
 
 void ADSPlayerController::ReturnCamera(float BlendSpeed)
 {
 	GetWorldTimerManager().ClearTimer(CameraReturnTimerHandle);
 
+	FocusTarget.Reset();
 	FocusTargetRotation = FocusOriginalRotation;
 	if (BlendSpeed > 0.f)
 		FocusBlendSpeed = BlendSpeed;
@@ -328,6 +329,15 @@ void ADSPlayerController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	if (!bIsCameraFocused) return;
+
+	// 포커스 중이면 매 프레임 타겟 방향 갱신
+	if (!bIsCameraReturning && FocusTarget.IsValid())
+	{
+		FVector CamLoc;
+		FRotator CamRot;
+		GetPlayerViewPoint(CamLoc, CamRot);
+		FocusTargetRotation = (FocusTarget->GetActorLocation() - CamLoc).Rotation();
+	}
 
 	// RInterpTo: 목표에 가까워질수록 자연스럽게 감속
 	const FRotator NewRot = FMath::RInterpTo(GetControlRotation(), FocusTargetRotation, DeltaTime, FocusBlendSpeed);
