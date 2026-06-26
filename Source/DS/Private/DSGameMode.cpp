@@ -136,8 +136,21 @@ void ADSGameMode::SwitchTurn_Implementation()
 	}
 	else
 	{
-		PushFocus(GetCurrentTurnGetter());
-		GetCurrentTurnGetter()->ReceiveTurn();
+		UCharacterInstanceComponent* TurnGetter = GetCurrentTurnGetter();
+		PushFocus(TurnGetter);
+
+		if (UNPCCharacterInstanceComponent* Npc = Cast<UNPCCharacterInstanceComponent>(TurnGetter))
+		{
+			if (AActor* NpcActor = Npc->GetOwner())
+			{
+				if (ADSPlayerController* PC = GetDSPlayerController())
+				{
+					PC->FocusOnActor(NpcActor, 1.5f, 0.4f);
+				}
+			}
+		}
+
+		TurnGetter->ReceiveTurn();
 	}
 }
 

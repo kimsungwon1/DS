@@ -3,6 +3,8 @@
 
 #include "Attack.h"
 #include "CharacterInstanceComponent.h"
+#include "NPCCharacterInstanceComponent.h"
+#include "DSPlayerController.h"
 #include "Weapon.h"
 #include "Hands.h"
 
@@ -45,6 +47,18 @@ void UAttack::ReadyAction_Implementation()
 {
 	// 나중에 캐릭터의 스탯에 따라 카운트 변화시키기
 	actionCount = 1;
+
+	if (UNPCCharacterInstanceComponent* NpcTarget = Cast<UNPCCharacterInstanceComponent>(target))
+	{
+		if (AActor* NpcActor = NpcTarget->GetOwner())
+		{
+			if (ADSPlayerController* PC = Cast<ADSPlayerController>(
+				GetWorld()->GetFirstPlayerController()))
+			{
+				PC->FocusOnActor(NpcActor, 2.f, 0.5f);
+			}
+		}
+	}
 }
 
 void UAttack::StartAction_Implementation()
