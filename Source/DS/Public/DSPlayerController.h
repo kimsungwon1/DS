@@ -44,6 +44,8 @@ public:
 
 	void OnActionSelected(class UDSAction* action);
 
+	virtual void Tick(float DeltaTime) override;
+
 	/**
 	 * 특정 액터에 카메라를 부드럽게 포커스합니다.
 	 * @param Target      포커스할 대상
@@ -142,5 +144,9 @@ protected:
 private:
 	bool bIsCameraFocused = false;
 	FTimerHandle CameraReturnTimerHandle;
-	TObjectPtr<AActor> FocusCamera; // 포커스용 임시 카메라 액터
+
+	FRotator FocusTargetRotation;
+	FRotator FocusOriginalRotation;
+	float FocusBlendTime = 0.f;
+	float FocusBlendAlpha = 0.f;
 };

@@ -11,8 +11,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Selector.h"
 #include "ActionList.h"
-#include "Camera/CameraActor.h"
-#include "Camera/CameraComponent.h"
 #include "TimerManager.h"
 
 void ADSPlayerController::TransferCharacterToUI(int32 index, UPlayerCharacterInstanceComponent* data)
@@ -294,29 +292,17 @@ void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float Ble
 {
 	if (!Target) return;
 
-	// 기존 포커스 타이머 취소
 	GetWorldTimerManager().ClearTimer(CameraReturnTimerHandle);
 
-	// 기존 포커스 카메라 제거
-	if (FocusCamera)
-	{
-		FocusCamera->Destroy();
-		FocusCamera = nullptr;
-	}
+	// 현재 카메라 위치에서 타겟 방향으로 회전값 계산
+	FVector CamLoc;
+	FRotator CamRot;
+	GetPlayerViewPoint(CamLoc, CamRot);
 
-	// Target 뒤쪽 위에 카메라 위치 계산
-	const FVector TargetLoc = Target->GetActorLocation();
-	const FVector BackOffset = Target->GetActorForwardVector() * -200.f + FVector(0.f, 0.f, 100.f);
-	const FVector CamLoc = TargetLoc + BackOffset;
-	const FRotator CamRot = (TargetLoc - CamLoc).Rotation();
-
-	// 임시 카메라 스폰
-	FActorSpawnParameters SpawnParams;
-	ACameraActor* Cam = GetWorld()->SpawnActor<ACameraActor>(CamLoc, CamRot, SpawnParams);
-	FocusCamera = Cam;
-
-	// EaseInOut 블렌드로 자연스럽게 전환 (가속 후 감속)
-	SetViewTargetWithBlend(Cam, BlendTime, VTBlend_EaseInOut, 2.f);
+	FocusTargetRotation = (Target->GetActorLocation() - CamLoc).Rotation();
+	FocusOriginalRotation = CamRot;
+	FocusBlendTime = BlendTime;
+	FocusBlendAlpha = 0.f;
 	bIsCameraFocused = true;
 
 	// Duration 후 자동 복귀
@@ -329,23 +315,33 @@ void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float Ble
 void ADSPlayerController::ReturnCamera(float BlendTime)
 {
 	GetWorldTimerManager().ClearTimer(CameraReturnTimerHandle);
-	bIsCameraFocused = false;
 
-	if (APlayerPartyMover* PartyMover = GetPlayerParty())
-	{
-		SetViewTargetWithBlend(PartyMover, BlendTime, VTBlend_EaseInOut, 2.f);
-	}
+	FVector CamLoc;
+	FRotator CamRot;
+	GetPlayerViewPoint(CamLoc, CamRot);
 
-	// 복귀 블렌드 끝난 후 임시 카메라 제거
-	if (FocusCamera)
+	FocusTargetRotation = FocusOriginalRotation;
+	FocusBlendTime = BlendTime;
+	FocusBlendAlpha = 0.f;
+
+	// 복귀 완료 후 포커스 해제
+	FTimerHandle ReleaseHandle;
+	GetWorldTimerManager().SetTimer(ReleaseHandle, [this]()
 	{
-		AActor* CamToDestroy = FocusCamera;
-		FocusCamera = nullptr;
-		FTimerHandle DestroyHandle;
-		GetWorldTimerManager().SetTimer(DestroyHandle, [CamToDestroy]()
-		{
-			if (CamToDestroy) CamToDestroy->Destroy();
-		}, BlendTime + 0.1f, false);
+		bIsCameraFocused = false;
+	}, BlendTime + 0.1f, false);
+}
+
+void ADSPlayerController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (bIsCameraFocused && FocusBlendTime > 0.f)
+	{
+		FocusBlendAlpha = FMath::Clamp(FocusBlendAlpha + DeltaTime / FocusBlendTime, 0.f, 1.f);
+		// EaseInOut 커브 적용
+		const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, FocusBlendAlpha, 2.f);
+		SetControlRotation(FMath::Lerp(GetControlRotation(), FocusTargetRotation, Alpha));
 	}
 }
 
