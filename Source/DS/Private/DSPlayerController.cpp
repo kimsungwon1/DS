@@ -11,6 +11,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Selector.h"
 #include "ActionList.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
+#include "TimerManager.h"
 
 void ADSPlayerController::TransferCharacterToUI(int32 index, UPlayerCharacterInstanceComponent* data)
 {
@@ -150,6 +153,10 @@ void ADSPlayerController::OnLookAround(const FInputActionValue& Value)
 	if (bIsCursorVisible) {
 		return;
 	}
+
+	if (bIsCameraFocused)
+		ReturnCamera(0.2f);
+
 	FVector2D TurnVector = Value.Get<FVector2D>();
 
 	if (auto* playerParty = GetPlayerParty()) {
@@ -163,6 +170,9 @@ void ADSPlayerController::OnMove(const FInputActionValue& Value)
 	{
 		return;
 	}
+
+	if (bIsCameraFocused)
+		ReturnCamera(0.2f);
 
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -278,6 +288,65 @@ void ADSPlayerController::EnableTargetSelection_Implementation()
 	}
 
 	currentSelector->SetActorTickEnabled(true);
+}
+
+void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float BlendTime)
+{
+	if (!Target) return;
+
+	// 기존 포커스 타이머 취소
+	GetWorldTimerManager().ClearTimer(CameraReturnTimerHandle);
+
+	// 기존 포커스 카메라 제거
+	if (FocusCamera)
+	{
+		FocusCamera->Destroy();
+		FocusCamera = nullptr;
+	}
+
+	// Target 뒤쪽 위에 카메라 위치 계산
+	const FVector TargetLoc = Target->GetActorLocation();
+	const FVector BackOffset = Target->GetActorForwardVector() * -200.f + FVector(0.f, 0.f, 100.f);
+	const FVector CamLoc = TargetLoc + BackOffset;
+	const FRotator CamRot = (TargetLoc - CamLoc).Rotation();
+
+	// 임시 카메라 스폰
+	FActorSpawnParameters SpawnParams;
+	ACameraActor* Cam = GetWorld()->SpawnActor<ACameraActor>(CamLoc, CamRot, SpawnParams);
+	FocusCamera = Cam;
+
+	// EaseInOut 블렌드로 자연스럽게 전환 (가속 후 감속)
+	SetViewTargetWithBlend(Cam, BlendTime, VTBlend_EaseInOut, 2.f);
+	bIsCameraFocused = true;
+
+	// Duration 후 자동 복귀
+	GetWorldTimerManager().SetTimer(CameraReturnTimerHandle, [this, BlendTime]()
+	{
+		ReturnCamera(BlendTime);
+	}, Duration, false);
+}
+
+void ADSPlayerController::ReturnCamera(float BlendTime)
+{
+	GetWorldTimerManager().ClearTimer(CameraReturnTimerHandle);
+	bIsCameraFocused = false;
+
+	if (APlayerPartyMover* PartyMover = GetPlayerParty())
+	{
+		SetViewTargetWithBlend(PartyMover, BlendTime, VTBlend_EaseInOut, 2.f);
+	}
+
+	// 복귀 블렌드 끝난 후 임시 카메라 제거
+	if (FocusCamera)
+	{
+		AActor* CamToDestroy = FocusCamera;
+		FocusCamera = nullptr;
+		FTimerHandle DestroyHandle;
+		GetWorldTimerManager().SetTimer(DestroyHandle, [CamToDestroy]()
+		{
+			if (CamToDestroy) CamToDestroy->Destroy();
+		}, BlendTime + 0.1f, false);
+	}
 }
 
 void ADSPlayerController::DisableTargetSelection_Implementation()

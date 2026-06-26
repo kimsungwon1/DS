@@ -43,6 +43,20 @@ public:
 	ASelector* GetBaseSelector() { return baseSelector; }
 
 	void OnActionSelected(class UDSAction* action);
+
+	/**
+	 * 특정 액터에 카메라를 부드럽게 포커스합니다.
+	 * @param Target      포커스할 대상
+	 * @param Duration    포커스 유지 시간 (초)
+	 * @param BlendTime   카메라 전환 블렌드 시간 (초)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void FocusOnActor(AActor* Target, float Duration = 2.f, float BlendTime = 0.5f);
+
+	/** 카메라를 원래 PlayerPartyMover로 복귀합니다. */
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void ReturnCamera(float BlendTime = 0.4f);
+
 protected:
 	void BeginPlay() override;
 
@@ -124,4 +138,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSoftClassPtr<ASelector> baseSelectorCandidate;
+
+private:
+	bool bIsCameraFocused = false;
+	FTimerHandle CameraReturnTimerHandle;
+	TObjectPtr<AActor> FocusCamera; // 포커스용 임시 카메라 액터
 };
