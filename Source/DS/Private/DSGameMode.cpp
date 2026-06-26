@@ -156,7 +156,7 @@ void ADSGameMode::PopFocus(UObject* forcusee)
 {
 	UE_LOG(LogTemp, Log, TEXT("Mode pops focus for %s"), *forcusee->GetFName().ToString());
 
-	if (focuseeStack.Top() == forcusee)
+	if (!focuseeStack.IsEmpty()  && focuseeStack.Top() == forcusee)
 	{
 		focuseeStack.Pop();
 
@@ -242,6 +242,19 @@ UCharacterInstanceComponent* ADSGameMode::GetCurrentTurnGetter()
 	}
 
 	return arrCharactersInTurn[currentTurnGetterIndex];
+}
+
+bool ADSGameMode::IsThisTop(UObject* ob) const
+{
+	if (focuseeStack.IsEmpty())
+	{
+		return false;
+	}
+	else if (focuseeStack.Top() == ob)
+	{
+		return true;
+	}
+	return false;
 }
 
 ADSPlayerController* ADSGameMode::GetDSPlayerController()

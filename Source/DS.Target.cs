@@ -10,6 +10,7 @@ public class DSTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
+		BuildEnvironment = TargetBuildEnvironment.Unique;
 		ExtraModuleNames.Add("DS");
 	}
 }

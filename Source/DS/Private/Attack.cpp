@@ -51,14 +51,19 @@ void UAttack::StartAction_Implementation()
 {
 	Super::StartAction_Implementation();
 
-	if (actionCount > 0 && target)
+	if (target && target->IsDead())
+	{
+		actor->DecideAttack(actor->GetDSGameMode());
+	}
+
+	if (actionCount > 0 && target && !target->IsDead())
 	{
 		GetWorld()->GetTimerManager().SetTimer(
 			AttackTimerHandle,
 			this,
 			&UAttack::ExecuteAction_Implementation,
-			0.8f,  // 기합 후 타격까지의 대기 시간 (1~2초)
-			false  // 반복 없음
+			0.8f,
+			false
 		);
 	}
 	else

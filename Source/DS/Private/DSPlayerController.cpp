@@ -283,10 +283,6 @@ void ADSPlayerController::EnableTargetSelection_Implementation()
 void ADSPlayerController::DisableTargetSelection_Implementation()
 {
 	bIsSelectingTarget = false;
-	// if (bIsCursorVisible)
-	// {
-	// 	OnCursorSwitch(FInputActionValue());
-	// }
 
 	currentSelector->Empty();
 	currentSelector->SetActorTickEnabled(false);

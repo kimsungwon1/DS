@@ -5,6 +5,7 @@
 #include "DSPlayerController.h"
 #include "BaseCharacter.h"
 #include "CharacterInstanceComponent.h"
+#include "Attack.h"
 #include "DSAction.h"
 #include "Targeter_DSCharacter.h"
 
@@ -102,5 +103,20 @@ void ASelector::Empty()
 		selected->GetMesh()->SetRenderCustomDepth(false);
 	}
 	selectedCharacters.Empty();
+}
+
+void ASelector::SetLockedTarget(UCharacterInstanceComponent* newTarget)
+{
+	for (auto* selected : selectedCharacters)
+	{
+		selected->GetMesh()->SetRenderCustomDepth(false);
+	}
+	selectedCharacters.Empty();
+
+	if (newTarget)
+	{
+		newTarget->GetMesh()->SetRenderCustomDepth(true);
+		selectedCharacters.Add(newTarget);
+	}
 }
 

@@ -88,10 +88,16 @@ public:
 	UDSAction* GetActionByIndex(int index) { return ableActions[index]; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	int32 GetActionCount() const { return ableActions.Num(); }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AController* GetController();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool IsDead() const { return FinalFaceStat.Health <= 0; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	const FFaceStat& GetFinalFaceStat() const { return FinalFaceStat; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool IsIdle() const;
@@ -112,8 +118,10 @@ public:
 
 	void CalculateSpeed();
 
+	UFUNCTION(BlueprintCallable)
 	virtual void DecideAction(ADSGameMode* md);
 
+	UFUNCTION(BlueprintCallable)
 	virtual void DecideAttack(ADSGameMode* md);
 
 	UFUNCTION(BlueprintCallable)

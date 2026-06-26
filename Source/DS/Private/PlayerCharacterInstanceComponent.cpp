@@ -13,6 +13,8 @@
 #include "ActionList.h"
 #include "DSNPCParty.h"
 #include "NPCCharacterInstanceComponent.h"
+#include "Attack.h"
+#include "Selector.h"
 
 UPlayerCharacterInstanceComponent::UPlayerCharacterInstanceComponent()
 {
@@ -144,35 +146,39 @@ void UPlayerCharacterInstanceComponent::DecideAttack(ADSGameMode* md)
 {
 	currentAction = ableActions[0];
 
-	auto parties = md->GetNpcParties();
-	TArray<UNPCCharacterInstanceComponent*> candidates;
-	UCharacterInstanceComponent* nearestOne = nullptr;
-	double nearestDistance = DOUBLE_BIG_NUMBER;
-
 	auto* at = Cast<UAttack>(currentAction);
 
-	for (ADSNPCParty* np : parties)
+	if (at && !at->IsTargetLost())
+	{
+		return;
+	}
+
+	TArray<UCharacterInstanceComponent*> candidates;
+
+	for (ADSNPCParty* np : md->GetNpcParties())
 	{
 		for (UNPCCharacterInstanceComponent* nc : np->characters)
 		{
-			if (nc == nullptr || !ITargeter_DSCharacter::Execute_IsTargetValid_character(at->_getUObject(), nc))
+			if (nc == nullptr || nc->IsDead())
 			{
 				continue;
 			}
-
-			double distance = FVector::Distance(nc->GetCharacterLocation(), GetCharacterLocation());
-
-			if (distance < nearestDistance)
+			if (!ITargeter_DSCharacter::Execute_IsTargetValid_character(at->_getUObject(), nc))
 			{
-				nearestOne = nc;
-				nearestDistance = distance;
+				continue;
 			}
+			candidates.Add(nc);
 		}
 	}
 
-	if (nearestOne != nullptr)
+	if (candidates.Num() > 0)
 	{
-		ITargeter_DSCharacter::Execute_SetTarget_character(at->_getUObject(), nearestOne);
+		int32 randIdx = FMath::RandRange(0, candidates.Num() - 1);
+		ITargeter_DSCharacter::Execute_SetTarget_character(at->_getUObject(), candidates[randIdx]);
+	}
+	else
+	{
+		ITargeter_DSCharacter::Execute_SetTarget_character(at->_getUObject(), nullptr);
 	}
 }
 
@@ -180,3 +186,4 @@ ADSParty* UPlayerCharacterInstanceComponent::GetParty()
 {
 	return GetPlayerPartyMover()->GetParty();
 }
+

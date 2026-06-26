@@ -32,6 +32,8 @@ public:
 
 	void SetTarget_character_Implementation(class UCharacterInstanceComponent* targetCharacter) { target = targetCharacter; }
 
+	UCharacterInstanceComponent* GetTarget() const { return target; }
+
 	void Initialize_Implementation(UCharacterInstanceComponent* actorInstance);
 protected:
 	UPROPERTY(BlueprintReadWrite)

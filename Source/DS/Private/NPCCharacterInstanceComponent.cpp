@@ -95,12 +95,17 @@ void UNPCCharacterInstanceComponent::DecideAction(ADSGameMode* md)
 void UNPCCharacterInstanceComponent::DecideAttack(ADSGameMode* md)
 {
 	TArray<ADSParty*> parties;
-	UCharacterInstanceComponent* nearestOne = nullptr;
-	double nearestDistance = DOUBLE_BIG_NUMBER;
+	TArray<UCharacterInstanceComponent*> candidates;
 
 	currentAction = ableActions[0];
 
 	auto* at = Cast<UAttack>(currentAction);
+
+	// 현재 타겟이 살아있으면 바꾸지 않는다
+	if (at && !at->IsTargetLost())
+	{
+		return;
+	}
 
 	if (npcParty->bIsHostile)
 	{
@@ -118,7 +123,7 @@ void UNPCCharacterInstanceComponent::DecideAttack(ADSGameMode* md)
 	}
 	else
 	{
-		for (auto* np : mode->GetNpcParties())
+		for (auto* np : md->GetNpcParties())
 		{
 			if (np->bIsHostile)
 			{
@@ -131,44 +136,33 @@ void UNPCCharacterInstanceComponent::DecideAttack(ADSGameMode* md)
 	{
 		if (party->IsA(ADSNPCParty::StaticClass()))
 		{
-			auto* np = Cast <ADSNPCParty>(party);
+			auto* np = Cast<ADSNPCParty>(party);
 			for (UNPCCharacterInstanceComponent* c : np->characters)
 			{
-				double distance = FVector::Distance(c->GetCharacterLocation(), GetCharacterLocation());
-
-				if (c->IsDead())
+				if (!c->IsDead())
 				{
-					continue;
-				}
-				if (distance < nearestDistance)
-				{
-					nearestOne = c;
-					nearestDistance = distance;
+					candidates.Add(c);
 				}
 			}
 		}
 		if (party->IsA(ADSPlayerParty::StaticClass()))
 		{
-			auto* pp = Cast <ADSPlayerParty>(party);
+			auto* pp = Cast<ADSPlayerParty>(party);
 			for (UPlayerCharacterInstanceComponent* c : pp->characters)
 			{
-				if (c == nullptr || c->IsDead())
+				if (c != nullptr && !c->IsDead())
 				{
-					continue;
-				}
-				double distance = FVector::Distance(c->GetCharacterLocation(), GetCharacterLocation());
-
-				if (distance < nearestDistance)
-				{
-					nearestOne = c;
-					nearestDistance = distance;
+					candidates.Add(c);
 				}
 			}
 		}
 	}
 
-	if(nearestOne != nullptr)
-	ITargeter_DSCharacter::Execute_SetTarget_character(at->_getUObject(), nearestOne);
+	if (candidates.Num() > 0)
+	{
+		int32 randIdx = FMath::RandRange(0, candidates.Num() - 1);
+		ITargeter_DSCharacter::Execute_SetTarget_character(at->_getUObject(), candidates[randIdx]);
+	}
 }
 
 void UNPCCharacterInstanceComponent::ReceiveTurn_Implementation()

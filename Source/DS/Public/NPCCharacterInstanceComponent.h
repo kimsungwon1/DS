@@ -64,6 +64,8 @@ public:
 	bool IsHostileForParam(UCharacterInstanceComponent* character) override;
 
 	class ADSParty* GetParty() override;
+
+	void SetNPCParty(ADSNPCParty* Party) { npcParty = Party; }
 protected:
 	// void SpawnByBlueprint();
 

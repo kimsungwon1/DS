@@ -89,7 +89,7 @@ public:
 	UCharacterInstanceComponent* GetCurrentTurnGetter();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	const UObject* GetCurrentForcusee() const { return focuseeStack.Top(); }
+	bool IsThisTop(UObject* ob) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	ADSPlayerController* GetDSPlayerController();

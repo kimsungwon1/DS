@@ -40,6 +40,8 @@ public:
 
 	UDSMainWidget* GetMainWidget() { return mainWidget; }
 
+	ASelector* GetBaseSelector() { return baseSelector; }
+
 	void OnActionSelected(class UDSAction* action);
 protected:
 	void BeginPlay() override;

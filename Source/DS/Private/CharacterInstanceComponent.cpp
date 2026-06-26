@@ -135,17 +135,10 @@ void UCharacterInstanceComponent::TickComponent(float DeltaTime, ELevelTick Tick
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	UCharacterInstanceComponent* turnGetter = actor->GetDSGameMode()->GetCurrentTurnGetter();
-	if (!IsDead() && turnGetter && currentAction)
+	if (!IsDead() && currentAction && currentAction->IsTargetLost() && currentAction->IsA<UAttack>())
 	{
-		if (turnGetter->IsHostileForParam(this) && currentAction->IsA<UAttack>() && currentAction->IsTargetLost())
-		{
-			if (ITargeter_DSCharacter::Execute_IsTargetValid_character(currentAction, turnGetter))
-			{
-				ITargeter_DSCharacter::Execute_SetTarget_character(currentAction, turnGetter);
-				GetDSGameMode()->PushForTurn(this);
-			}
-		}
+		DecideAttack(GetDSGameMode());
+		GetDSGameMode()->PushForTurn(this);
 	}
 	// ...
 }

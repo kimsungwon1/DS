@@ -43,6 +43,8 @@ public:
 
 	void Empty();
 
+	void SetLockedTarget(class UCharacterInstanceComponent* newTarget);
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FRetHit CastHit();
 	FRetHit CastHit_Implementation();
