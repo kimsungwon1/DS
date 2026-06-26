@@ -55,9 +55,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void FocusOnActor(AActor* Target, float Duration = 2.f, float BlendTime = 0.5f);
 
-	/** 카메라를 원래 PlayerPartyMover로 복귀합니다. */
+	/** 카메라를 원래 시점으로 복귀합니다. */
 	UFUNCTION(BlueprintCallable, Category = "Camera")
-	void ReturnCamera(float BlendTime = 0.4f);
+	void ReturnCamera(float BlendSpeed = 0.f);
 
 protected:
 	void BeginPlay() override;
@@ -143,10 +143,10 @@ protected:
 
 private:
 	bool bIsCameraFocused = false;
+	bool bIsCameraReturning = false;
 	FTimerHandle CameraReturnTimerHandle;
 
 	FRotator FocusTargetRotation;
 	FRotator FocusOriginalRotation;
-	float FocusBlendTime = 0.f;
-	float FocusBlendAlpha = 0.f;
+	float FocusBlendSpeed = 5.f;
 };

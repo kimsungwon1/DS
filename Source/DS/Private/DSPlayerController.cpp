@@ -153,7 +153,7 @@ void ADSPlayerController::OnLookAround(const FInputActionValue& Value)
 	}
 
 	if (bIsCameraFocused)
-		ReturnCamera(0.2f);
+		ReturnCamera(8.f);
 
 	FVector2D TurnVector = Value.Get<FVector2D>();
 
@@ -170,7 +170,7 @@ void ADSPlayerController::OnMove(const FInputActionValue& Value)
 	}
 
 	if (bIsCameraFocused)
-		ReturnCamera(0.2f);
+		ReturnCamera(8.f);
 
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -288,60 +288,55 @@ void ADSPlayerController::EnableTargetSelection_Implementation()
 	currentSelector->SetActorTickEnabled(true);
 }
 
-void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float BlendTime)
+void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float BlendSpeed)
 {
 	if (!Target) return;
 
 	GetWorldTimerManager().ClearTimer(CameraReturnTimerHandle);
 
-	// 현재 카메라 위치에서 타겟 방향으로 회전값 계산
 	FVector CamLoc;
 	FRotator CamRot;
 	GetPlayerViewPoint(CamLoc, CamRot);
 
 	FocusTargetRotation = (Target->GetActorLocation() - CamLoc).Rotation();
 	FocusOriginalRotation = CamRot;
-	FocusBlendTime = BlendTime;
-	FocusBlendAlpha = 0.f;
+	FocusBlendSpeed = BlendSpeed;
 	bIsCameraFocused = true;
+	bIsCameraReturning = false;
 
 	// Duration 후 자동 복귀
-	GetWorldTimerManager().SetTimer(CameraReturnTimerHandle, [this, BlendTime]()
+	GetWorldTimerManager().SetTimer(CameraReturnTimerHandle, [this]()
 	{
-		ReturnCamera(BlendTime);
+		ReturnCamera();
 	}, Duration, false);
 }
 
-void ADSPlayerController::ReturnCamera(float BlendTime)
+void ADSPlayerController::ReturnCamera(float BlendSpeed)
 {
 	GetWorldTimerManager().ClearTimer(CameraReturnTimerHandle);
 
-	FVector CamLoc;
-	FRotator CamRot;
-	GetPlayerViewPoint(CamLoc, CamRot);
-
 	FocusTargetRotation = FocusOriginalRotation;
-	FocusBlendTime = BlendTime;
-	FocusBlendAlpha = 0.f;
-
-	// 복귀 완료 후 포커스 해제
-	FTimerHandle ReleaseHandle;
-	GetWorldTimerManager().SetTimer(ReleaseHandle, [this]()
-	{
-		bIsCameraFocused = false;
-	}, BlendTime + 0.1f, false);
+	if (BlendSpeed > 0.f)
+		FocusBlendSpeed = BlendSpeed;
+	bIsCameraFocused = true;
+	bIsCameraReturning = true;
 }
 
 void ADSPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bIsCameraFocused && FocusBlendTime > 0.f)
+	if (!bIsCameraFocused) return;
+
+	// RInterpTo: 목표에 가까워질수록 자연스럽게 감속
+	const FRotator NewRot = FMath::RInterpTo(GetControlRotation(), FocusTargetRotation, DeltaTime, FocusBlendSpeed);
+	SetControlRotation(NewRot);
+
+	// 복귀 중이고 목표에 충분히 가까워지면 포커스 종료
+	if (bIsCameraReturning)
 	{
-		FocusBlendAlpha = FMath::Clamp(FocusBlendAlpha + DeltaTime / FocusBlendTime, 0.f, 1.f);
-		// EaseInOut 커브 적용
-		const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, FocusBlendAlpha, 2.f);
-		SetControlRotation(FMath::Lerp(GetControlRotation(), FocusTargetRotation, Alpha));
+		if (FocusTargetRotation.Equals(GetControlRotation(), 0.5f))
+			bIsCameraFocused = false;
 	}
 }
 
