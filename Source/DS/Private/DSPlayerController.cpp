@@ -299,7 +299,8 @@ void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float Ble
 	GetPlayerViewPoint(CamLoc, CamRot);
 
 	FocusTargetRotation = (Target->GetActorLocation() - CamLoc).Rotation();
-	FocusOriginalRotation = CamRot;
+	if (!bIsCameraFocused)
+		FocusOriginalRotation = CamRot;
 	FocusBlendSpeed = BlendSpeed;
 	bIsCameraFocused = true;
 	bIsCameraReturning = false;
