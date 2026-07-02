@@ -59,6 +59,21 @@ struct FFaceStat {
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
 	int32 Karma = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resistance")
+	int32 ResistAether = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resistance")
+	int32 ResistWater = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resistance")
+	int32 ResistAir = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resistance")
+	int32 ResistEarth = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resistance")
+	int32 ResistSun = 0;
 };
 
 

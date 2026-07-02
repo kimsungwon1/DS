@@ -145,7 +145,7 @@ void ADSGameMode::SwitchTurn_Implementation()
 			{
 				if (ADSPlayerController* PC = GetDSPlayerController())
 				{
-					PC->FocusOnActor(NpcActor, 1.5f, 0.4f);
+					PC->FocusOnActor(NpcActor, 1.5f, 2.f);
 				}
 			}
 		}

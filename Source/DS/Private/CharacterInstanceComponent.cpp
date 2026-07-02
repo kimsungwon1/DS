@@ -2,6 +2,7 @@
 
 
 #include "CharacterInstanceComponent.h"
+#include "DSSpellData.h"
 #include "BaseCharacter.h"
 #include "DSAction.h"
 #include "SpellCast.h"
@@ -143,16 +144,27 @@ void UCharacterInstanceComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	// ...
 }
 
+void UCharacterInstanceComponent::ReceiveHeal_Implementation(int32 Amount)
+{
+	FinalFaceStat.Health = FMath::Min(FinalFaceStat.Health + Amount, FinalFaceStat.MaxHP);
+}
+
+void UCharacterInstanceComponent::ApplyDamage(int32 FinalDamage)
+{
+	FinalFaceStat.Health = FMath::Max(0, FinalFaceStat.Health - FinalDamage);
+}
+
 void UCharacterInstanceComponent::ReceiveDamage_Implementation(UCharacterInstanceComponent* attacker)
 {
 	GetDSGameMode()->PushFocus(this);
+	ApplyDamage(CalculateDamage(attacker));
+	GetDSGameMode()->PopFocus(this);
+}
 
-	int finalDamage = CalculateDamage(attacker);
-
-	FinalFaceStat.Health -= finalDamage;
-
-	FinalFaceStat.Health = FMath::Max(0, FinalFaceStat.Health);
-
+void UCharacterInstanceComponent::ReceiveSpellDamage_Implementation(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData)
+{
+	GetDSGameMode()->PushFocus(this);
+	ApplyDamage(CalculateSpellDamage(attacker, SpellData));
 	GetDSGameMode()->PopFocus(this);
 }
 
@@ -160,8 +172,35 @@ int UCharacterInstanceComponent::CalculateDamage_Implementation(UCharacterInstan
 {
 	FWeaponStat weaponStat = attacker->GetHoldingWeapon()->GetStat();
 	int finalDamage = FMath::RandRange(weaponStat.damageMinimum, weaponStat.damageMaximum) + weaponStat.damageEnhance;
-
 	return finalDamage;
+}
+
+int UCharacterInstanceComponent::CalculateSpellDamage_Implementation(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData)
+{
+	if (!SpellData) return 0;
+
+	// MinPower~MaxPower 랜덤 기본값
+	int32 BaseDamage = FMath::RandRange(
+		FMath::RoundToInt(SpellData->MinPower),
+		FMath::RoundToInt(SpellData->MaxPower)
+	);
+
+	// 시전자 Intelligence 보정 (STANDARD 기준 상대값)
+	float AttackerBonus = 1.f + (attacker->GetCharStat().Intelligence - FCharacterStat::STANDARD) * 0.02f;
+
+	// 피해자 원소 저항 적용
+	int32 Resistance = 0;
+	switch (SpellData->Element)
+	{
+		case ESpellElement::Aether: Resistance = FinalFaceStat.ResistAether; break;
+		case ESpellElement::Water:  Resistance = FinalFaceStat.ResistWater;  break;
+		case ESpellElement::Air:    Resistance = FinalFaceStat.ResistAir;    break;
+		case ESpellElement::Earth:  Resistance = FinalFaceStat.ResistEarth;  break;
+		case ESpellElement::Sun:    Resistance = FinalFaceStat.ResistSun;    break;
+	}
+
+	int32 FinalDamage = FMath::Max(0, FMath::RoundToInt(BaseDamage * AttackerBonus) - Resistance);
+	return FinalDamage;
 }
 
 void UCharacterInstanceComponent::ReceiveTurn_Implementation()

@@ -7,6 +7,7 @@
 #include "Selector.generated.h"
 
 class ADSPlayerController;
+class USpell;
 
 USTRUCT(BlueprintType)
 struct FRetHit

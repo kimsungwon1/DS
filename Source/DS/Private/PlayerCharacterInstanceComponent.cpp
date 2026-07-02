@@ -163,7 +163,7 @@ void UPlayerCharacterInstanceComponent::DecideAttack(ADSGameMode* md)
 			{
 				continue;
 			}
-			if (!ITargeter_DSCharacter::Execute_IsTargetValid_character(at->_getUObject(), nc))
+			if (!ITargeter_DSCharacter::Execute_IsTargetValid_character(at, nc))
 			{
 				continue;
 			}
@@ -174,11 +174,11 @@ void UPlayerCharacterInstanceComponent::DecideAttack(ADSGameMode* md)
 	if (candidates.Num() > 0)
 	{
 		int32 randIdx = FMath::RandRange(0, candidates.Num() - 1);
-		ITargeter_DSCharacter::Execute_SetTarget_character(at->_getUObject(), candidates[randIdx]);
+		ITargeter_DSCharacter::Execute_SetTarget_character(at, candidates[randIdx]);
 	}
 	else
 	{
-		ITargeter_DSCharacter::Execute_SetTarget_character(at->_getUObject(), nullptr);
+		ITargeter_DSCharacter::Execute_SetTarget_character(at, nullptr);
 	}
 }
 

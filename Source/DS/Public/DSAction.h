@@ -66,6 +66,7 @@ public:
 	virtual void PassTurn_Implementation(ADSGameMode* mode, UObject* switcher);
 
 	int GetActionCount() const { return actionCount; }
+	UCharacterInstanceComponent* GetActor() const { return actor; }
 
 	EDSTargetType GetType() const { return targetType; }
 

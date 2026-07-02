@@ -11,7 +11,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Selector.h"
 #include "ActionList.h"
+#include "SpellCast.h"
 #include "TimerManager.h"
+#include "Components/SkeletalMeshComponent.h"
 
 void ADSPlayerController::TransferCharacterToUI(int32 index, UPlayerCharacterInstanceComponent* data)
 {
@@ -153,7 +155,7 @@ void ADSPlayerController::OnLookAround(const FInputActionValue& Value)
 	}
 
 	if (bIsCameraFocused)
-		ReturnCamera(8.f);
+		bIsCameraFocused = false;
 
 	FVector2D TurnVector = Value.Get<FVector2D>();
 
@@ -170,7 +172,7 @@ void ADSPlayerController::OnMove(const FInputActionValue& Value)
 	}
 
 	if (bIsCameraFocused)
-		ReturnCamera(8.f);
+		bIsCameraFocused = false;
 
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -258,7 +260,9 @@ void ADSPlayerController::OnActionSelected(UDSAction* action)
 	else if (action->IsA<USpellCast>())
 	{
 		USpellCast* sc = Cast<USpellCast>(action);
-
+		if (mainWidget)
+			mainWidget->OpenSpellList(sc->GetActor());
+		return;
 	}
 
 	switch (action->GetType())
@@ -299,8 +303,20 @@ void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float Ble
 	GetPlayerViewPoint(CamLoc, CamRot);
 
 	FocusTarget = Target;
+
+	FocusHeadZOffset = 50.f;
+	if (USkeletalMeshComponent* Mesh = Target->FindComponentByClass<USkeletalMeshComponent>())
+	{
+		FVector HeadPos = Mesh->GetSocketLocation(FName("head"));
+		if (!HeadPos.IsZero())
+			FocusHeadZOffset = HeadPos.Z - Target->GetActorLocation().Z;
+	}
+
 	if (!bIsCameraFocused)
+	{
 		FocusOriginalRotation = CamRot;
+		FocusCurrentVelocity = FRotator::ZeroRotator;
+	}
 	FocusBlendSpeed = BlendSpeed;
 	bIsCameraFocused = true;
 	bIsCameraReturning = false;
@@ -320,6 +336,7 @@ void ADSPlayerController::ReturnCamera(float BlendSpeed)
 	FocusTargetRotation = FocusOriginalRotation;
 	if (BlendSpeed > 0.f)
 		FocusBlendSpeed = BlendSpeed;
+	FocusCurrentVelocity = FRotator::ZeroRotator;
 	bIsCameraFocused = true;
 	bIsCameraReturning = true;
 }
@@ -336,11 +353,14 @@ void ADSPlayerController::Tick(float DeltaTime)
 		FVector CamLoc;
 		FRotator CamRot;
 		GetPlayerViewPoint(CamLoc, CamRot);
-		FocusTargetRotation = (FocusTarget->GetActorLocation() - CamLoc).Rotation();
+
+		const FVector LookAtPos = FocusTarget->GetActorLocation() + FVector(0.f, 0.f, FocusHeadZOffset);
+		FocusTargetRotation = (LookAtPos - CamLoc).Rotation();
 	}
 
-	// RInterpTo: 목표에 가까워질수록 자연스럽게 감속
-	const FRotator NewRot = FMath::RInterpTo(GetControlRotation(), FocusTargetRotation, DeltaTime, FocusBlendSpeed);
+	// 가속도 느낌: 속도를 매 프레임 증가시켜서 RInterpTo에 넘김
+	FocusCurrentVelocity.Yaw = FMath::Min(FocusCurrentVelocity.Yaw + DeltaTime * FocusBlendSpeed * 40.f, FocusBlendSpeed * 12.f);
+	const FRotator NewRot = FMath::RInterpTo(GetControlRotation(), FocusTargetRotation, DeltaTime, FocusCurrentVelocity.Yaw);
 	SetControlRotation(NewRot);
 
 	// 복귀 중이고 목표에 충분히 가까워지면 포커스 종료

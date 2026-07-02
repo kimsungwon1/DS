@@ -5,5 +5,5 @@
 
 ABasePlayerState::ABasePlayerState()
 {
-	NetUpdateFrequency = 100.f; // How often server update client.
+	// SetNetUpdateFrequency(100.f);
 }

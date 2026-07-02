@@ -8,9 +8,9 @@ public class DSTarget : TargetRules
 	public DSTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V5;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
-		BuildEnvironment = TargetBuildEnvironment.Unique;
+		DefaultBuildSettings = BuildSettingsVersion.V7;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+		BuildEnvironment = TargetBuildEnvironment.Shared;
 		ExtraModuleNames.Add("DS");
 	}
 }

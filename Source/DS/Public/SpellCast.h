@@ -1,21 +1,19 @@
-﻿
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "DSAction.h"
-#include "Targeter_DSCharacter.h"
-#include "Targeter_PositionVector.h"
 #include "SpellCast.generated.h"
 
 class USpell;
+class UDSSpellData;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DS_API USpellCast : public UDSAction
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	USpellCast();
 
 	UFUNCTION(BlueprintCallable)
@@ -23,11 +21,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	USpell* GetSpell() { return heldSpell; }
 
-	virtual void StartAction_Implementation() override;
+	UFUNCTION(BlueprintCallable)
+	void SetSpellFromData(UDSSpellData* Data, int32 Level = 1);
 
+	virtual void Initialize_Implementation(UCharacterInstanceComponent* actorInstance) override;
+	virtual void StartAction_Implementation() override;
 	virtual void ExecuteAction_Implementation() override;
 
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<USpell> heldSpell;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 SpellLevel = 1;
 };

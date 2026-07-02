@@ -7,7 +7,10 @@
 #include "CharacterInstanceComponent.h"
 #include "Attack.h"
 #include "DSAction.h"
+#include "SpellCast.h"
 #include "Targeter_DSCharacter.h"
+#include "Targeter_PositionVector.h"
+#include "Spell.h"
 
 // Sets default values for this component's properties
 ASelector::ASelector()
@@ -17,20 +20,25 @@ ASelector::ASelector()
 
 ESetTargetReturnType ASelector::SetTargetForAction_Implementation(UDSAction* action)
 {
-	if (!selectedCharacters.IsEmpty())
-	{
-		if (!ITargeter_DSCharacter::Execute_IsTargetValid_character(action, selectedCharacters[0]))
-		{
-			return ESetTargetReturnType::TooFar;
-		}
-
-		ITargeter_DSCharacter::Execute_SetTarget_character(action, selectedCharacters[0]);
-		
-		return ESetTargetReturnType::Success;
-	}
-	else {
+	if (selectedCharacters.IsEmpty())
 		return ESetTargetReturnType::NoHit;
+
+	// SpellCast면 heldSpell에 직접 위임
+	UObject* targeter = action;
+	if (USpellCast* SpellCast = Cast<USpellCast>(action))
+	{
+		if (USpell* Spell = SpellCast->GetSpell())
+			targeter = Spell;
 	}
+
+	if (!targeter->Implements<UTargeter_DSCharacter>())
+		return ESetTargetReturnType::NoHit;
+
+	if (!ITargeter_DSCharacter::Execute_IsTargetValid_character(targeter, selectedCharacters[0]))
+		return ESetTargetReturnType::TooFar;
+
+	ITargeter_DSCharacter::Execute_SetTarget_character(targeter, selectedCharacters[0]);
+	return ESetTargetReturnType::Success;
 }
 
 FRetHit ASelector::CastHit_Implementation()

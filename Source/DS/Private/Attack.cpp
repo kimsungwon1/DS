@@ -55,7 +55,7 @@ void UAttack::ReadyAction_Implementation()
 			if (ADSPlayerController* PC = Cast<ADSPlayerController>(
 				GetWorld()->GetFirstPlayerController()))
 			{
-				PC->FocusOnActor(NpcActor, 2.f, 0.5f);
+				PC->FocusOnActor(NpcActor, 2.f, 2.f);
 			}
 		}
 	}

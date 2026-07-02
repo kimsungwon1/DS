@@ -149,5 +149,7 @@ private:
 	TWeakObjectPtr<AActor> FocusTarget;
 	FRotator FocusTargetRotation;
 	FRotator FocusOriginalRotation;
+	FRotator FocusCurrentVelocity = FRotator::ZeroRotator;
+	float FocusHeadZOffset = 50.f;
 	float FocusBlendSpeed = 5.f;
 };

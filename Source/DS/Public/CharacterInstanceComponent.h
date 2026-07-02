@@ -10,6 +10,7 @@
 class UDSAction;
 class AWeapon;
 class ADSGameMode;
+class UDSSpellData;
 
 UENUM(BlueprintType)
 enum class EAbleActionState : uint8
@@ -57,8 +58,22 @@ public:
 	virtual void ReceiveDamage_Implementation(UCharacterInstanceComponent* attacker);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ReceiveSpellDamage(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData);
+	virtual void ReceiveSpellDamage_Implementation(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ReceiveHeal(int32 Amount);
+	virtual void ReceiveHeal_Implementation(int32 Amount);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	int CalculateDamage(UCharacterInstanceComponent* attacker);
 	int CalculateDamage_Implementation(UCharacterInstanceComponent* attacker);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	int CalculateSpellDamage(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData);
+	int CalculateSpellDamage_Implementation(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData);
+
+	void ApplyDamage(int32 FinalDamage);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ReceiveTurn();
@@ -98,6 +113,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	const FFaceStat& GetFinalFaceStat() const { return FinalFaceStat; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	const FCharacterStat& GetCharStat() const { return CharStat; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool IsIdle() const;

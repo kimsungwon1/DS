@@ -8,8 +8,9 @@ public class DSEditorTarget : TargetRules
 	public DSEditorTarget( TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V6;
+		DefaultBuildSettings = BuildSettingsVersion.V7;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+		bOverrideBuildEnvironment = true;
 		ExtraModuleNames.Add("DS");
 	}
 }

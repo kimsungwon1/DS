@@ -10,6 +10,11 @@
 #include "DSTarget.h"
 #include "Spell.generated.h"
 
+class UCharacterInstanceComponent;
+class UDSSpellData;
+class AEffectBase;
+class AProjectileBase;
+
 UENUM(BlueprintType)
 enum class ESpellResult : uint8
 {
@@ -52,9 +57,11 @@ class DS_API USpell : public UObject
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
+public:
 	USpell();
+
+	UFUNCTION(BlueprintCallable)
+	void Initialize(UCharacterInstanceComponent* InCaster, int32 InLevel = 1);
 
 	UFUNCTION()
 	ESpellResult CheckResult();
@@ -62,18 +69,35 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Cast();
 
+	const FSpellStat& GetSpellStat() const { return SpellStat; }
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
+	TObjectPtr<UDSSpellData> SpellData;
+
 protected:
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SpawnEffectAt(TSoftClassPtr<AEffectBase> EffectClass, FVector Location);
+	void SpawnProjectileToward(TSoftClassPtr<AProjectileBase> ProjectileClass, FVector From, FVector To);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Cast_Success();
+	virtual void Cast_Success_Implementation() {}
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Fizzle();
+	virtual void Fizzle_Implementation() {}
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Fizzle_SparkToParty();
+	virtual void Fizzle_SparkToParty_Implementation() {}
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FSpellStat SpellStat;
 
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UCharacterInstanceComponent> Caster;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 CastLevel = 1;
 };

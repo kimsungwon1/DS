@@ -10,6 +10,7 @@
  */
 
 class UPlayerCharacterInstanceComponent;
+class UCharacterInstanceComponent;
 class UDSAction;
 
 UCLASS()
@@ -34,6 +35,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool SelectActionTarget(UDSAction* action);
 	bool SelectActionTarget_Implementation(UDSAction* action) { return true; }
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OpenSpellList(UCharacterInstanceComponent* actorInstance);
+	void OpenSpellList_Implementation(UCharacterInstanceComponent* actorInstance) {}
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void CloseSpellList();
+	void CloseSpellList_Implementation() {}
 
 protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, EditFixedSize)
