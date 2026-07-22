@@ -64,7 +64,7 @@ void ASelector::BeginPlay()
 void ASelector::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (pcController)
+	if (pcController && reservedAction && TargetVolume)
 	{
 		// bool bHit = pcController->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, false, HitResult);
 
@@ -91,6 +91,15 @@ void ASelector::Tick(float DeltaSeconds)
 
 			if (cic && mesh && selectedCharacters.Num() == 0)
 			{
+				UObject* targeter = reservedAction;
+				if (USpellCast* SpellCast = Cast<USpellCast>(reservedAction))
+				{
+					if (USpell* Spell = SpellCast->GetSpell())
+						targeter = Spell;
+				}
+
+				SetTargetOutlinerValid(ITargeter_DSCharacter::Execute_IsTargetValid_character(targeter, cic));
+				
 				mesh->SetRenderCustomDepth(true);
 				selectedCharacters.Add(cic);
 			}
@@ -102,6 +111,25 @@ void ASelector::Tick(float DeltaSeconds)
 			selectedCharacters.Empty();
 		}
 	}
+}
+
+void ASelector::SetTargetOutlinerValid(bool isValid)
+{
+	if (!TargetVolume) return;
+	auto& Blendables = TargetVolume->Settings.WeightedBlendables.Array;
+	if (Blendables.Num() >= 2)
+	{
+		Blendables[0].Weight = isValid ? 1.f : 0.f;  // 평소 머티리얼
+		Blendables[1].Weight = isValid ? 0.f : 1.f;  // 빨간 머티리얼
+	}
+}
+
+void ASelector::Initialize(ADSPlayerController* controller, APostProcessVolume* volume, UDSAction* action)
+{
+	this->SetActorTickEnabled(true);
+	pcController = controller;
+	reservedAction = action;
+	TargetVolume = volume;
 }
 
 void ASelector::Empty()
@@ -117,7 +145,10 @@ void ASelector::SetLockedTarget(UCharacterInstanceComponent* newTarget)
 {
 	for (auto* selected : selectedCharacters)
 	{
-		selected->GetMesh()->SetRenderCustomDepth(false);
+		if (USkeletalMeshComponent* mesh = selected->GetMesh())
+		{
+			mesh->SetRenderCustomDepth(false);
+		}
 	}
 	selectedCharacters.Empty();
 

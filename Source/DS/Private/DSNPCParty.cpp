@@ -50,7 +50,7 @@ static bool FindValidSpawnLocation(UWorld* World, const FVector& Origin, const F
     return false;
 }
 
-TArray<class UCharacterInstanceComponent*> ADSNPCParty::GetCharacters()
+TArray<class UCharacterInstanceComponent*> ADSNPCParty::GetCharacters() const 
 {
     TArray<class UCharacterInstanceComponent*> ret;
     for (UNPCCharacterInstanceComponent* nc : characters)
@@ -71,14 +71,17 @@ void ADSNPCParty::OnConstruction(const FTransform& Transform)
     if (!World || World->IsGameWorld())
         return; // Preview only in editor; BeginPlay handles in-game spawning
 
-    // Remove previous preview actors
+    // 추적 목록 정리
+    for (AActor* A : PreviewActors)
+        if (IsValid(A)) A->Destroy();
+    PreviewActors.Empty();
+
+    // Undo로 되살아난 액터도 태그로 추가 정리
     TArray<AActor*> Attached;
     GetAttachedActors(Attached);
     for (AActor* A : Attached)
-    {
-        if (A && A->Tags.Contains(FName("DSEncounterPreview")))
+        if (IsValid(A) && A->Tags.Contains(FName("DSEncounterPreview")))
             A->Destroy();
-    }
 
     FActorSpawnParameters Params;
     Params.ObjectFlags |= RF_Transient;
@@ -100,11 +103,12 @@ void ADSNPCParty::OnConstruction(const FTransform& Transform)
         if (!FindValidSpawnLocation(World, Origin, Candidate, SpawnRadius, ZOffset, SpawnLoc))
             SpawnLoc = Candidate + FVector(0.f, 0.f, ZOffset); // best-effort for editor preview
 
-        AActor* Spawned = World->SpawnActor<AActor>(NPCClass, SpawnLoc, FRotator::ZeroRotator, Params);
+        ABaseNPC* Spawned = World->SpawnActor<ABaseNPC>(NPCClass, SpawnLoc, GetActorRotation()/*FRotator::ZeroRotator*/, Params);
         if (Spawned)
         {
             Spawned->Tags.Add(FName("DSEncounterPreview"));
             Spawned->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+            PreviewActors.Add(Spawned);
         }
     }
 }
@@ -145,16 +149,11 @@ void ADSNPCParty::BeginPlay()
         if (!FindValidSpawnLocation(World, Origin, Candidate, SpawnRadius, ZOffset, SpawnLoc))
             continue; // skip if no valid floor found
 
-        const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLoc);
+        const FTransform SpawnTransform(GetActorRotation(), SpawnLoc);
         ABaseNPC* NPC = World->SpawnActorDeferred<ABaseNPC>(NPCClass, SpawnTransform);
         if (!NPC) continue;
 
-        UNPCCharacterInstanceComponent* Comp = NPC->FindComponentByClass<UNPCCharacterInstanceComponent>();
-        if (Comp)
-        {
-            Comp->SetNPCParty(this);
-            characters.Add(Comp);
-        }
+        NPC->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 
         NPC->FinishSpawning(SpawnTransform);
     }

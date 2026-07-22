@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "DSTarget.h"
 #include "Selector.generated.h"
 
 class ADSPlayerController;
 class USpell;
+class UDSAction;
 
 USTRUCT(BlueprintType)
 struct FRetHit
@@ -36,11 +38,15 @@ class DS_API ASelector : public AActor
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	ASelector();
 
-	void Initialize(ADSPlayerController* controller) { pcController = controller; }
+	// 이 셀렉터가 골라주는 대상 유형 — SpellData 검증(IsDataValid)에서 사용
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Selector")
+	EDSTargetType ProducedTargetType = EDSTargetType::None;
+
+	void Initialize(ADSPlayerController* controller, APostProcessVolume* volume, UDSAction* action = nullptr);
 
 	void Empty();
 
@@ -54,6 +60,8 @@ public:
 	ESetTargetReturnType SetTargetForAction(class UDSAction* action);
 	ESetTargetReturnType SetTargetForAction_Implementation(class UDSAction* action);
 
+	UFUNCTION(BlueprintCallable)
+	void SetTargetOutlinerValid(bool isValid);
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -66,4 +74,10 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite)
 	TArray<class UCharacterInstanceComponent*> selectedCharacters;
+
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UDSAction> reservedAction = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<APostProcessVolume> TargetVolume;
 };

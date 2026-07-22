@@ -73,6 +73,7 @@ public:
 	int CalculateSpellDamage(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData);
 	int CalculateSpellDamage_Implementation(UCharacterInstanceComponent* attacker, UDSSpellData* SpellData);
 
+	UFUNCTION(BlueprintCallable)
 	void ApplyDamage(int32 FinalDamage);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -118,6 +119,9 @@ public:
 	const FCharacterStat& GetCharStat() const { return CharStat; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	const FKnownSpells& GetKnownSpells() const { return KnownSpells; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool IsIdle() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -143,7 +147,7 @@ public:
 	virtual void DecideAttack(ADSGameMode* md);
 
 	UFUNCTION(BlueprintCallable)
-	virtual bool IsHostileForParam(UCharacterInstanceComponent* character) { return true; }
+	virtual bool IsHostileForParam(UCharacterInstanceComponent* character) { return false; }
 
 	virtual class ADSParty* GetParty() { return nullptr; }
 public:
@@ -165,6 +169,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
 	FCharacterStat CharStat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spell")
+	FKnownSpells KnownSpells;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
 	TArray<TObjectPtr<UDSAction>> ableActions;

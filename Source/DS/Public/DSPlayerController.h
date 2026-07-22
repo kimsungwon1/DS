@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "DSTarget.h"
-#include "DSTarget.h"
 #include "DSPlayerController.generated.h"
 
 class APlayerPartyMover;
@@ -16,6 +15,7 @@ class UDSPlayerCharaData;
 class UDSMainWidget;
 class UPlayerCharacterInstanceComponent;
 class ASelector;
+class UDSAction;
 struct FInputActionValue;
 
 /**
@@ -35,12 +35,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EndBattle();
 
+	UFUNCTION(BlueprintCallable)
+	void EnterHomeBase();
+
+	UFUNCTION(BlueprintCallable)
+	void ExitHomeBase();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	APlayerPartyMover* GetPlayerParty();
 
 	UDSMainWidget* GetMainWidget() { return mainWidget; }
 
-	ASelector* GetBaseSelector() { return baseSelector; }
+	ASelector* GetBaseSelector() { return selectors[0]; }
 
 	void OnActionSelected(class UDSAction* action);
 
@@ -59,6 +65,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void ReturnCamera(float BlendSpeed = 0.f);
 
+	UFUNCTION(BlueprintCallable)
+	void EnableSelect(UDSAction* action, TSubclassOf<ASelector> selectorType = nullptr);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void EnableTargetSelection(UDSAction* action);
+	void EnableTargetSelection_Implementation(UDSAction* action);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void DisableTargetSelection(bool bCloseActionWidgets = true);
+	void DisableTargetSelection_Implementation(bool bCloseActionWidgets = true);
 protected:
 	void BeginPlay() override;
 
@@ -99,20 +115,23 @@ protected:
 
 	void OnRunShiftFinished(const FInputActionValue& Value);
 
+	// 매 틱 커서 밑 월드 오브젝트(문 등)를 감지해서 HoveredComponent를 갱신하고, 바뀌면 OnBeginCursorOver/OnEndCursorOver를
+	// 컴포넌트+액터 양쪽에 수동으로 쏴줌. bEnableClickEvents/bEnableMouseOverEvents(엔진 자동 커서 트레이스)는
+	// Trace Complex가 내부적으로 true 고정이라 콜리전에 따라 클릭이 씹히는 문제가 있어서 대신 이걸 씀.
+	// bIsSelectingTarget이 true(Selector가 커서 쓰는 중)면 완전히 스킵해서 서로 안 겹치게 함.
+	void UpdateWorldObjectHover();
+
 	UFUNCTION(BlueprintNativeEvent)
 	void OnClick();
 	void OnClick_Implementation();
 
+	UFUNCTION(BlueprintNativeEvent)
+	void OnClickOff();
+	void OnClickOff_Implementation() {}
+
 	UFUNCTION(BlueprintCallable)
 	void PartyMovableSwitch(bool bAble);
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void EnableTargetSelection();
-	void EnableTargetSelection_Implementation();
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void DisableTargetSelection();
-	void DisableTargetSelection_Implementation();
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	APlayerPartyMover* party = nullptr;
@@ -132,16 +151,28 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<UDSAction> reservedAction;
 	
+	// UPROPERTY(BlueprintReadOnly)
+	// TObjectPtr<ASelector> baseSelector;
+
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<ASelector> baseSelector;
+	TArray<ASelector*> selectors;
 
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<ASelector> currentSelector;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSoftClassPtr<ASelector> baseSelectorCandidate;
+	TSubclassOf<ASelector> baseSelectorCandidate;
+
+	UPROPERTY()
+	TObjectPtr<APostProcessVolume> TargetVolume;
 
 private:
+	// UpdateWorldObjectHover가 이번 틱 기준으로 커서 밑에 있다고 판단한 컴포넌트 (없으면 invalid)
+	TWeakObjectPtr<class UPrimitiveComponent> HoveredComponent;
+
+	// 위 컴포넌트를 맞춘 트레이스의 실제 충돌 지점 - 거리 체크(GetDefaultReachDistance 등)에 컴포넌트 원점 대신 이걸 씀
+	FVector HoveredHitLocation = FVector::ZeroVector;
+
 	bool bIsCameraFocused = false;
 	bool bIsCameraReturning = false;
 	FTimerHandle CameraReturnTimerHandle;

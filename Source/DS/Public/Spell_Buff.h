@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #include "CoreMinimal.h"
@@ -14,7 +14,11 @@ class DS_API USpell_Buff : public USpell, public ITargeter_DSCharacter
 
 public:
 	bool IsTargetValid_character_Implementation(UCharacterInstanceComponent* targetCharacter) override;
-	void SetTarget_character_Implementation(UCharacterInstanceComponent* targetCharacter) override { Target = targetCharacter; }
+	void SetTarget_character_Implementation(UCharacterInstanceComponent* targetCharacter) override;
+
+	virtual bool IsTargetValid() const override;
+
+	virtual UCharacterInstanceComponent* FindReplacementTarget() override;
 
 protected:
 	virtual void Cast_Success_Implementation() override;

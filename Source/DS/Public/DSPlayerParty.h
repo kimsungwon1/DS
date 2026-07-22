@@ -18,7 +18,7 @@ class DS_API ADSPlayerParty : public ADSParty
 public:
 	ADSPlayerParty();
 
-	TArray<class UCharacterInstanceComponent*> GetCharacters() override;
+	TArray<class UCharacterInstanceComponent*> GetCharacters() const override;
 public:
 	UPROPERTY(EditAnywhere, EditFixedSize, BlueprintReadWrite, Category = "RPG")
 	TArray<TObjectPtr<UPlayerCharacterInstanceComponent>> characters;

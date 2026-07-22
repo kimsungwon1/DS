@@ -33,16 +33,28 @@ public:
 	void EndBattle_Implementation() {}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void EnterHomeBase();
+	void EnterHomeBase_Implementation() {}
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ExitHomeBase();
+	void ExitHomeBase_Implementation() {}
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool SelectActionTarget(UDSAction* action);
 	bool SelectActionTarget_Implementation(UDSAction* action) { return true; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void OpenSpellList(UCharacterInstanceComponent* actorInstance);
-	void OpenSpellList_Implementation(UCharacterInstanceComponent* actorInstance) {}
+	void OpenSpellList(UCharacterInstanceComponent* actorInstance, class USpellCast* castAction);
+	void OpenSpellList_Implementation(UCharacterInstanceComponent* actorInstance, class USpellCast* castAction) {}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void CloseSpellList();
 	void CloseSpellList_Implementation() {}
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ActionSelectDone();
+	void ActionSelectDone_Implementation() { CloseSpellList(); }
 
 protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, EditFixedSize)

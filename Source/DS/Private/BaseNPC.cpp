@@ -5,6 +5,7 @@
 #include "NPCCharacterInstanceComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "DSNPCParty.h"
 
 // Sets default values
 ABaseNPC::ABaseNPC()
@@ -26,15 +27,15 @@ void ABaseNPC::BeginPlay()
 
 void ABaseNPC::Initialize_CharacterDefine()
 {
-	if (!softNpcPtr.IsNull())
-	{
-		UClass* loadedClass = softNpcPtr.LoadSynchronous();
-		if (loadedClass)
-		{
-			auto* newCharacter = NewObject<UNPCCharacterInstanceComponent>(this, loadedClass);
-			newCharacter->RegisterComponent();
-		}
-	}
+	// if (!softNpcPtr.IsNull())
+	// {
+	// 	UClass* loadedClass = softNpcPtr.LoadSynchronous();
+	// 	if (loadedClass)
+	// 	{
+	// 		auto* newCharacter = NewObject<UNPCCharacterInstanceComponent>(this, loadedClass);
+	// 		newCharacter->RegisterComponent();
+	// 	}
+	// }
 }
 
 // Called every frame
@@ -49,6 +50,13 @@ void ABaseNPC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+ADSParty* ABaseNPC::GetParty()
+{
+	UNPCCharacterInstanceComponent* ncic = GetComponentByClass<UNPCCharacterInstanceComponent>();
+
+	return ncic->GetNpcParty();
 }
 
 

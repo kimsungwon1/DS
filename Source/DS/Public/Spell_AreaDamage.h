@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #include "CoreMinimal.h"
@@ -16,6 +16,10 @@ public:
 	bool IsTargetValid_position_Implementation(FVector targetPosition) override { return true; }
 	void SetTarget_position_Implementation(FVector targetPosition) override { TargetPosition = targetPosition; }
 
+	// 위치 지정 스펠 — 캐릭터 생사와 무관, 항상 유효
+	virtual bool IsTargetValid() const override { return true; }
+
+	virtual UCharacterInstanceComponent* FindReplacementTarget() override { return nullptr; }
 protected:
 	virtual void Cast_Success_Implementation() override;
 

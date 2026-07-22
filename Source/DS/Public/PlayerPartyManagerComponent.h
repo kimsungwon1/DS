@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "SaveGameData.h"
 #include "PlayerPartyManagerComponent.generated.h"
 
 class ADSPlayerParty;
@@ -63,6 +64,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Party")
 	void NotifyMemberLeft(UPlayerCharacterInstanceComponent* Player);
 
+	// GatherPartyWidget 등에서 확정한 세이브데이터로 파티를 직접 채움 (eCharactersSpawnType 스위치와 무관하게 독립 호출).
+	// 빈 슬롯(characterName == NAME_None)은 건너뜀. 슬롯당 PCInstanceComponentClass(예: BP_PCInstanceComponent)를
+	// NewObject로 생성 + InitializeFromSaveData 호출 + 캡슐 슬롯까지 할당.
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	void ApplySaveDataToParty(const TArray<FPlayerCharacterSaveData>& PartySaveData);
+
+	// GatherPartyWidget의 파티 슬롯 하나에 세이브데이터로 바로 라이브 캐릭터를 만들어 꽂음 (스폰+캡슐할당까지).
+	// 슬롯이 이미 차있으면 실패(nullptr).
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	UPlayerCharacterInstanceComponent* AddCharacterToParty(const FPlayerCharacterSaveData& SaveData, int32 SlotIndex);
+
+	// 파티 슬롯 하나를 비움 - 빼기 전에 그 캐릭터의 현재 상태를 UpdateCharacter로 저장하고, 캡슐 해제 + 컴포넌트 파괴까지 함
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	bool RemoveCharacterFromParty(int32 SlotIndex);
+
+	// partyObject->characters 순서대로 GetDSController()->TransferCharacterToUI() 호출해서 하단 파티 UI(초상화 등) 갱신.
+	// BeginPlay 때 한 번 호출되고, 파티 구성이 바뀔 수 있는 시점(홈베이스 나갈 때 등)마다 다시 불러줘야 함
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	void RefreshPartyUI();
+
 #pragma region HelperFunctions
 private:
 	void initializeParty_default();
@@ -88,6 +109,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, EditFixedSize, BlueprintReadWrite, Category = "PartySpawn")
 	TArray<TSoftClassPtr<class UDSRPGSaveCharacter>> saveCharacter_developerDefine;
+#pragma endregion
+
+#pragma region SaveDataApply
+protected:
+	// ApplySaveDataToParty가 각 파티원 슬롯에 실제로 만들 컴포넌트 클래스 (블루프린트에서 BP_PCInstanceComponent로 지정)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PartySpawn")
+	TSoftClassPtr<UPlayerCharacterInstanceComponent> PCInstanceComponentClass;
 #pragma endregion
 
 private:

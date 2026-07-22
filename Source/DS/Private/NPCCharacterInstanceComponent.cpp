@@ -5,6 +5,7 @@
 #include "DSCharacterBaseData.h"
 #include "ActionList.h"
 #include "Spell.h"
+#include "DSSpellData.h"
 #include "DSGameMode.h"
 #include "DSNPCParty.h"
 #include "DSPlayerController.h"
@@ -20,26 +21,34 @@ void UNPCCharacterInstanceComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	for(TSoftClassPtr<USpell> spellClass : ableSpellsCandidates)
+	for (UDSSpellData* SpellData : ableSpellsCandidates)
 	{
-		if (spellClass)
-		{
-			auto* uclass = spellClass.LoadSynchronous();
-			auto* newSpell = NewObject<USpell>(this, uclass);
+		if (!SpellData || SpellData->SpellClass.IsNull()) continue;
 
-			ableSpells.Add(newSpell);
-		}
+		UClass* SpellClass = SpellData->SpellClass.LoadSynchronous();
+		if (!SpellClass) continue;
+
+		USpell* newSpell = NewObject<USpell>(this, SpellClass);
+		newSpell->SpellData = SpellData;
+
+		ableSpells.Add(newSpell);
 	}
 
 	if (npcParty == nullptr)
 	{
-		FActorSpawnParameters param;
-
-		ADSNPCParty* party = GetWorld()->SpawnActor<ADSNPCParty>(ADSNPCParty::StaticClass(), param);
-
-		party->characters.Add(this);
-
-		npcParty = party;
+		ADSNPCParty* ParentParty = Cast<ADSNPCParty>(GetOwner()->GetAttachParentActor());
+		if (ParentParty)
+		{
+			npcParty = ParentParty;
+			ParentParty->characters.Add(this);
+			GetOwner()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		}
+		else
+		{
+			ADSNPCParty* party = GetWorld()->SpawnActor<ADSNPCParty>(ADSNPCParty::StaticClass());
+			party->characters.Add(this);
+			npcParty = party;
+		}
 	}
 }
 

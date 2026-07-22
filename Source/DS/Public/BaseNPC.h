@@ -27,7 +27,5 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSoftClassPtr<class UNPCCharacterInstanceComponent> softNpcPtr;
+	virtual class ADSParty* GetParty() override;
 };

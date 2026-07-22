@@ -14,8 +14,7 @@ public class DS : ModuleRules
 
 		// PublicIncludePaths.AddRange(new string[] { "DS/Public/CharacterInfo", "DS/Public/Concepts", "DS/Public/Gears", "DS/Public/RealObject", "DS/Public/UI" });
 
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore", "AssetRegistry" });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

@@ -39,7 +39,9 @@ void UDSPartyMemberWidget::RefreshUI()
 
 	const FFaceStat& Face = CharacterInstance->GetFinalFaceStat();
 	const float HPRatio = (Face.MaxHP > 0) ? FMath::Clamp((float)Face.Health / Face.MaxHP, 0.f, 1.f) : 0.f;
-	const float SPRatio = (Face.MaxSP > 0) ? FMath::Clamp((float)Face.CurrentSP / Face.MaxSP, 0.f, 1.f) : 0.f;
+	const int32 MaxSPTotal = Face.MaxSP.Total();
+	const int32 CurrentSPTotal = Face.CurrentSP.Total();
+	const float SPRatio = (MaxSPTotal > 0) ? FMath::Clamp((float)CurrentSPTotal / MaxSPTotal, 0.f, 1.f) : 0.f;
 
 	if (CharacterNameText)
 		CharacterNameText->SetText(FText::FromName(CharacterInstance->characterName));
@@ -60,7 +62,7 @@ void UDSPartyMemberWidget::RefreshUI()
 		HPText->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), Face.Health, Face.MaxHP)));
 
 	if (SPText)
-		SPText->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), Face.CurrentSP, Face.MaxSP)));
+		SPText->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), CurrentSPTotal, MaxSPTotal)));
 
 	const bool bDead = CharacterInstance->IsDead();
 	if (DeadOverlay)

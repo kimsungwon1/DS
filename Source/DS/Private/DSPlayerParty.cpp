@@ -8,7 +8,7 @@ ADSPlayerParty::ADSPlayerParty() : characters{nullptr, nullptr, nullptr, nullptr
 {
 }
 
-TArray<class UCharacterInstanceComponent*> ADSPlayerParty::GetCharacters()
+TArray<class UCharacterInstanceComponent*> ADSPlayerParty::GetCharacters() const
 {
     TArray<class UCharacterInstanceComponent*> ret;
 

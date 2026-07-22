@@ -20,7 +20,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bIsHostile = true;
 
-	TArray<class UCharacterInstanceComponent*> GetCharacters() override;
+	TArray<class UCharacterInstanceComponent*> GetCharacters() const override;
 
 	// --- Encounter Spawner ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
@@ -34,4 +34,8 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<AActor>> PreviewActors;
 };

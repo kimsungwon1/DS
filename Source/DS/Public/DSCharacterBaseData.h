@@ -26,4 +26,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat")
 	FCharacterStat CharStat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat")
+	FSkillStat SkillStat;
 };

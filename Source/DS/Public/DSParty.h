@@ -14,5 +14,8 @@ class DS_API ADSParty : public AParty
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual TArray<class UCharacterInstanceComponent*> GetCharacters() { return TArray<class UCharacterInstanceComponent*>(); }
+	virtual TArray<class UCharacterInstanceComponent*> GetCharacters() const { return TArray<class UCharacterInstanceComponent*>(); }
+
+	UFUNCTION(BlueprintCallable)
+	bool IsWipedOut() const;
 };

@@ -7,14 +7,33 @@
 #include "NPCCharacterInstanceComponent.h"
 #include "PlayerCharacterInstanceComponent.h"
 #include "PlayerPartyMover.h"
+#include "DSMainWidget.h"
 #include "DSNPCParty.h"
 #include "DSPlayerParty.h"
 #include "Attack.h"
+#include "DSSaveGameSubsystem.h"
+#include "PlayerPartyManagerComponent.h"
 
 ADSGameMode::ADSGameMode()
 	: AGameModeBase(), pcMemberColors{FColor::Red, FColor::Green, FColor::Purple, FColor::Blue, FColor::Orange, FColor::Yellow}
 {
 
+}
+
+void ADSGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UDSSaveGameSubsystem* SaveSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UDSSaveGameSubsystem>() : nullptr;
+
+	if (SaveSubsystem && SaveSubsystem->IsPendingNewGame())
+	{
+		EnterHomeBase();
+	}
+	else
+	{
+		// TODO: 이어하기 - 저장된 파티/마지막 위치를 복원해서 스폰 (세션 세이브 시스템 아직 없음)
+	}
 }
 
 void ADSGameMode::StartBattle_Implementation()
@@ -91,6 +110,9 @@ void ADSGameMode::StartCycle_Implementation()
 		}
 	}
 
+	// GetDSPlayerController()->GetMainWidget()->ActionSelectDone();
+	GetDSPlayerController()->DisableTargetSelection();
+
 	SortCharacters();
 
 	SwitchTurn();
@@ -108,6 +130,51 @@ void ADSGameMode::EndCycle_Implementation()
 	arrCharactersInTurn.Empty();
 
 	DecideCharactersAction();
+}
+
+void ADSGameMode::EnterHomeBase_Implementation()
+{
+	// 뭔가에 의해 두 번 불려도(문 상호작용 중복 등) 홈 위젯이 겹쳐서 또 뜨지 않도록 방지
+	if (bIsInHomeBase)
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Mode enters Home Base"));
+
+	bIsInHomeBase = true;
+
+	OnHomeBaseChanged.Broadcast(bIsInHomeBase);
+
+	auto* dsp = GetDSPlayerController();
+
+	dsp->EnterHomeBase();
+}
+
+void ADSGameMode::ExitHomeBase_Implementation()
+{
+	if (!bIsInHomeBase)
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Mode exits Home Base"));
+
+	// TODO: 여기서 플레이어 파티를 마을 밖 시작 지점(스폰 포인트)으로 옮기는 로직 필요 (나중에)
+
+	bIsInHomeBase = false;
+
+	// 홈베이스에서 파티 구성(Add/Remove)이 바뀌었을 수 있으니 하단 UI 얼굴들 다시 갱신
+	if (UPlayerPartyManagerComponent* Manager = GetPartyManager())
+	{
+		Manager->RefreshPartyUI();
+	}
+
+	OnHomeBaseChanged.Broadcast(bIsInHomeBase);
+
+	auto* dsp = GetDSPlayerController();
+
+	dsp->ExitHomeBase();
 }
 
 void ADSGameMode::SortCharacters()
@@ -158,18 +225,21 @@ void ADSGameMode::PlayerDefeated_Implementation()
 {
 }
 
-void ADSGameMode::PushFocus(UObject* forcusee)
+void ADSGameMode::PushFocus(UObject* focusee)
 {
-	UE_LOG(LogTemp, Log, TEXT("Mode pushes focus for %s"), *forcusee->GetFName().ToString());
+	if (!focuseeStack.Contains(focusee)) 
+	{
+		UE_LOG(LogTemp, Log, TEXT("Mode pushes focus for %s"), *focusee->GetFName().ToString());
 
-	focuseeStack.Push(forcusee);
+		focuseeStack.Push(focusee);
+	}
 }
 
-void ADSGameMode::PopFocus(UObject* forcusee)
+void ADSGameMode::PopFocus(UObject* focusee)
 {
-	UE_LOG(LogTemp, Log, TEXT("Mode pops focus for %s"), *forcusee->GetFName().ToString());
+	UE_LOG(LogTemp, Log, TEXT("Mode pops focus for %s"), *focusee->GetFName().ToString());
 
-	if (!focuseeStack.IsEmpty()  && focuseeStack.Top() == forcusee)
+	if (!focuseeStack.IsEmpty()  && focuseeStack.Top() == focusee)
 	{
 		focuseeStack.Pop();
 
@@ -184,15 +254,15 @@ void ADSGameMode::PopFocus(UObject* forcusee)
 	}
 }
 
-void ADSGameMode::SwitchFocus(UObject* top, UObject* switchee)
+void ADSGameMode::SwitchFocus(UObject* focusee, UObject* newFocusee)
 {
-	UE_LOG(LogTemp, Log, TEXT("Mode pops focus for %s, %s"), *focuseeStack.Top()->GetFName().ToString(), *switchee->GetFName().ToString());
+	UE_LOG(LogTemp, Log, TEXT("Mode pops focus for %s, %s"), *focuseeStack.Top()->GetFName().ToString(), *newFocusee->GetFName().ToString());
 
-	if (focuseeStack.Top() == top)
+	if (focuseeStack.Top() == focusee)
 	{
 		focuseeStack.Pop();
 
-		focuseeStack.Push(switchee);
+		focuseeStack.Push(newFocusee);
 	}
 }
 
@@ -290,6 +360,32 @@ APlayerPartyMover* ADSGameMode::GetPartyMover()
 	}
 
 	return partyMover;
+}
+
+ADSPlayerParty* ADSGameMode::GetPartyObject()
+{
+	if (cachedPartyObject == nullptr)
+	{
+		if (APlayerPartyMover* Mover = GetPartyMover())
+		{
+			cachedPartyObject = Cast<ADSPlayerParty>(Mover->GetParty());
+		}
+	}
+
+	return cachedPartyObject;
+}
+
+UPlayerPartyManagerComponent* ADSGameMode::GetPartyManager()
+{
+	if (cachedPartyManager == nullptr)
+	{
+		if (APlayerPartyMover* Mover = GetPartyMover())
+		{
+			cachedPartyManager = Mover->FindComponentByClass<UPlayerPartyManagerComponent>();
+		}
+	}
+
+	return cachedPartyManager;
 }
 
 float ADSGameMode::GetCycleProgress() const

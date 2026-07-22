@@ -13,7 +13,11 @@
 #include "ActionList.h"
 #include "SpellCast.h"
 #include "TimerManager.h"
-#include "Components/SkeletalMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Components/PrimitiveComponent.h"
+#include "DSBlueprintLibrary.h"
+#include "Item.h"
 
 void ADSPlayerController::TransferCharacterToUI(int32 index, UPlayerCharacterInstanceComponent* data)
 {
@@ -32,19 +36,35 @@ void ADSPlayerController::BeginPlay()
 	// SetupInputComponent();
 	FActorSpawnParameters params;
 
-	if (baseSelectorCandidate.IsNull())
+	// post process volume 찾기
 	{
-		baseSelector = GetWorld()->SpawnActor<ASelector>(params);
-		baseSelector->Initialize(this);
+		TArray<AActor*> FoundVolumes;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APostProcessVolume::StaticClass(), FoundVolumes);
+		if (FoundVolumes.Num() > 0)
+		{
+			TargetVolume = Cast<APostProcessVolume>(FoundVolumes[0]);
+		}
+	}
+
+	if (baseSelectorCandidate)
+	{
+		ASelector* baseSelector = GetWorld()->SpawnActor<ASelector>(baseSelectorCandidate, params);
+		baseSelector->Initialize(this, TargetVolume);
 		baseSelector->SetActorTickEnabled(false);
+		
+		selectors.Add(baseSelector);
+
+		currentSelector = baseSelector;
 	}
 	else
 	{
-		UClass* loadedClass = baseSelectorCandidate.LoadSynchronous();
-		
-		baseSelector = GetWorld()->SpawnActor<ASelector>(loadedClass);
-		baseSelector->Initialize(this);
-		baseSelector->SetActorTickEnabled(false);
+		ASelector* selector = GetWorld()->SpawnActor<ASelector>(params);
+		selector->Initialize(this, TargetVolume);
+		selector->SetActorTickEnabled(false);
+
+		selectors.Add(selector);
+
+		currentSelector = selector;
 	}
 
 	bIsCursorVisible = false;
@@ -76,6 +96,12 @@ void ADSPlayerController::BeginPlay()
 			}
 		}
 	}
+
+	// 엔진 자동 커서 트레이스(bEnableMouseOverEvents/bEnableClickEvents)는 내부적으로 Trace Complex가 true로
+	// 고정돼있어서 콜리전에 구멍 있는 메시는 클릭이 씹힘 - 대신 UpdateWorldObjectHover()에서 Trace Complex=false로
+	// 직접 트레이스해서 같은 네이티브 델리게이트(OnClicked/OnBeginCursorOver/OnEndCursorOver)를 수동으로 쏴줌
+	bEnableMouseOverEvents = false;
+	bEnableClickEvents = false;
 }
 
 APlayerPartyMover* ADSPlayerController::GetPlayerParty()
@@ -107,6 +133,37 @@ void ADSPlayerController::EndBattle()
 	}
 
 	PartyMovableSwitch(true);
+}
+
+void ADSPlayerController::EnterHomeBase()
+{
+	if (mainWidget)
+	{
+		mainWidget->EnterHomeBase();
+	}
+
+	PartyMovableSwitch(false);
+
+	// EnableTargetSelection처럼 타겟팅 시작하는 건 아니고, 그냥 커서만 보이게
+	if (!bIsCursorVisible)
+	{
+		OnCursorSwitch(FInputActionValue());
+	}
+}
+
+void ADSPlayerController::ExitHomeBase()
+{
+	if (mainWidget)
+	{
+		mainWidget->ExitHomeBase();
+	}
+
+	PartyMovableSwitch(true);
+
+	if (bIsCursorVisible)
+	{
+		OnCursorSwitch(FInputActionValue());
+	}
 }
 
 void ADSPlayerController::SetupInputComponent()
@@ -240,12 +297,108 @@ void ADSPlayerController::PartyMovableSwitch(bool bAble)
 
 void ADSPlayerController::OnClick_Implementation()
 {
-	if (bIsSelectingTarget)
+	if (bIsSelectingTarget && reservedAction)
 	{
 		ESetTargetReturnType eSuccess = currentSelector->SetTargetForAction(reservedAction);
 
-		DisableTargetSelection();
+		switch (eSuccess)
+		{
+		case ESetTargetReturnType::Success:
+			DisableTargetSelection();
+			break;
+		case ESetTargetReturnType::NoHit:
+
+			break;
+		case ESetTargetReturnType::TooFar:
+
+			break;
+		}
+		return;
 	}
+
+	// 타겟 선택 중이 아니면, 이번 틱에 UpdateWorldObjectHover가 잡아둔 월드 오브젝트(문 등)에 클릭 전달
+	if (HoveredComponent.IsValid())
+	{
+		AActor* HitActor = HoveredComponent->GetOwner();
+
+		// AItem이면 그 액터의 GetDistanceToUse()(오버라이드 가능) 쓰고, 아니면 공용 기본값
+		float ReachDistance = UDSBlueprintLibrary::GetDefaultReachDistance();
+		if (AItem* HitItem = Cast<AItem>(HitActor))
+		{
+			ReachDistance = HitItem->GetDistanceToUse();
+		}
+
+		if (APawn* MyPawn = GetPawn())
+		{
+			// 컴포넌트 원점 대신 실제 클릭(트레이스 충돌) 지점을 씀 - 문처럼 긴 오브젝트는 원점이랑 꽤 떨어질 수 있음.
+			// Dist2D(수평만)는 위/아래층처럼 Z가 많이 다른 대상도 가깝다고 오판할 수 있어서 그냥 3D 직선거리 씀
+			const float Distance = FVector::Dist(MyPawn->GetActorLocation(), HoveredHitLocation);
+			if (Distance > ReachDistance)
+			{
+				// 너무 멀어서 상호작용 안 함
+				return;
+			}
+		}
+
+		HoveredComponent->OnClicked.Broadcast(HoveredComponent.Get(), EKeys::LeftMouseButton);
+		if (HitActor)
+		{
+			HitActor->OnClicked.Broadcast(HitActor, EKeys::LeftMouseButton);
+		}
+	}
+}
+
+void ADSPlayerController::UpdateWorldObjectHover()
+{
+	// Selector가 커서를 쓰는 중이면 완전히 스킵 - 서로 절대 안 겹치게
+	if (bIsSelectingTarget)
+	{
+		if (HoveredComponent.IsValid())
+		{
+			HoveredComponent->OnEndCursorOver.Broadcast(HoveredComponent.Get());
+			if (AActor* OldOwner = HoveredComponent->GetOwner())
+			{
+				OldOwner->OnEndCursorOver.Broadcast(OldOwner);
+			}
+			HoveredComponent.Reset();
+		}
+		return;
+	}
+
+	FHitResult Hit;
+	const bool bHit = GetHitResultUnderCursor(ECC_Visibility, /*bTraceComplex=*/false, Hit);
+	UPrimitiveComponent* NewHovered = bHit ? Hit.GetComponent() : nullptr;
+
+	// 같은 컴포넌트를 계속 호버 중이어도 커서가 그 표면 위에서 움직였을 수 있으니 매 틱 갱신
+	if (bHit)
+	{
+		HoveredHitLocation = Hit.ImpactPoint;
+	}
+
+	if (NewHovered == HoveredComponent.Get())
+	{
+		return;
+	}
+
+	if (HoveredComponent.IsValid())
+	{
+		HoveredComponent->OnEndCursorOver.Broadcast(HoveredComponent.Get());
+		if (AActor* OldOwner = HoveredComponent->GetOwner())
+		{
+			OldOwner->OnEndCursorOver.Broadcast(OldOwner);
+		}
+	}
+
+	if (NewHovered)
+	{
+		NewHovered->OnBeginCursorOver.Broadcast(NewHovered);
+		if (AActor* NewOwner = NewHovered->GetOwner())
+		{
+			NewOwner->OnBeginCursorOver.Broadcast(NewOwner);
+		}
+	}
+
+	HoveredComponent = NewHovered;
 }
 
 void ADSPlayerController::OnActionSelected(UDSAction* action)
@@ -261,7 +414,9 @@ void ADSPlayerController::OnActionSelected(UDSAction* action)
 	{
 		USpellCast* sc = Cast<USpellCast>(action);
 		if (mainWidget)
-			mainWidget->OpenSpellList(sc->GetActor());
+		{
+			mainWidget->OpenSpellList(sc->GetActor(), sc);
+		}
 		return;
 	}
 
@@ -270,18 +425,18 @@ void ADSPlayerController::OnActionSelected(UDSAction* action)
 		case EDSTargetType::Self:
 			return;
 		case EDSTargetType::Opponent:
-			currentSelector = baseSelector;
-			EnableTargetSelection();
+			currentSelector = selectors[0];
+			EnableTargetSelection(action);
 			break;
 		case EDSTargetType::OpponentParty:
-			EnableTargetSelection();
+			EnableTargetSelection(action);
 		break;
 		default:
 			return;
 	}
 }
 
-void ADSPlayerController::EnableTargetSelection_Implementation()
+void ADSPlayerController::EnableTargetSelection_Implementation(UDSAction* action)
 {
 	bIsSelectingTarget = true;
 	if (!bIsCursorVisible)
@@ -289,7 +444,8 @@ void ADSPlayerController::EnableTargetSelection_Implementation()
 		OnCursorSwitch(FInputActionValue());
 	}
 
-	currentSelector->SetActorTickEnabled(true);
+	currentSelector->Initialize(this, TargetVolume, action);
+	// currentSelector->SetActorTickEnabled(true);
 }
 
 void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float BlendSpeed)
@@ -320,12 +476,6 @@ void ADSPlayerController::FocusOnActor(AActor* Target, float Duration, float Ble
 	FocusBlendSpeed = BlendSpeed;
 	bIsCameraFocused = true;
 	bIsCameraReturning = false;
-
-	// // Duration 후 자동 복귀
-	// GetWorldTimerManager().SetTimer(CameraReturnTimerHandle, [this]()
-	// {
-	// 	ReturnCamera();
-	// }, Duration, false);
 }
 
 void ADSPlayerController::ReturnCamera(float BlendSpeed)
@@ -341,9 +491,48 @@ void ADSPlayerController::ReturnCamera(float BlendSpeed)
 	bIsCameraReturning = true;
 }
 
+void ADSPlayerController::EnableSelect(UDSAction* action, TSubclassOf<ASelector> selectorType)
+{
+	// 나중에 selectorType을 통해 그 타입의 셀렉터가 목록에 있는지 확인한 다음 그거 쓰도록 하기.
+	if (currentSelector) 
+	{
+		currentSelector->SetActorTickEnabled(false);
+	}
+	currentSelector = nullptr;
+
+	if (selectorType == nullptr)
+	{
+		selectorType = baseSelectorCandidate;
+	}
+
+	for (ASelector* selector : selectors)
+	{
+		if (selector->GetClass() == selectorType)
+		{
+			currentSelector = selector;
+			currentSelector->Initialize(this, TargetVolume, action);
+			// currentSelector->SetActorTickEnabled(true);
+			
+		}
+	}
+	if (currentSelector == nullptr)
+	{
+		ASelector* sel = GetWorld()->SpawnActor<ASelector>(selectorType);
+		sel->Initialize(this, TargetVolume, action);
+
+		currentSelector = sel;
+
+		selectors.Add(sel);
+	}
+
+	EnableTargetSelection(action);
+}
+
 void ADSPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdateWorldObjectHover();
 
 	if (!bIsCameraFocused) return;
 
@@ -371,10 +560,18 @@ void ADSPlayerController::Tick(float DeltaTime)
 	}
 }
 
-void ADSPlayerController::DisableTargetSelection_Implementation()
+void ADSPlayerController::DisableTargetSelection_Implementation(bool bCloseActionWidgets)
 {
 	bIsSelectingTarget = false;
 
-	currentSelector->Empty();
-	currentSelector->SetActorTickEnabled(false);
+	if (currentSelector)
+	{
+		currentSelector->Empty();
+		currentSelector->SetActorTickEnabled(false);
+	}
+
+	if (bCloseActionWidgets && mainWidget)
+	{
+		mainWidget->ActionSelectDone();
+	}
 }

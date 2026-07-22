@@ -9,15 +9,24 @@
 /**
  * 
  */
-UCLASS(abstract)
+UCLASS(BlueprintType)
 class DS_API UCharacterClass : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
-protected:
+public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EProfession classType;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FCharacterStat neededStats;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FSkillStat StartingSkillStat;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int ExpBase = 100;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int Profession_HpMul = 3;
 };

@@ -1,4 +1,4 @@
-
+﻿
 #include "Spell_Heal.h"
 #include "CharacterInstanceComponent.h"
 #include "DSPlayerParty.h"
@@ -14,6 +14,14 @@ void USpell_Heal::ApplyHeal_Implementation(UCharacterInstanceComponent* HealTarg
 bool USpell_Heal::IsTargetValid_character_Implementation(UCharacterInstanceComponent* targetCharacter)
 {
 	return targetCharacter && !targetCharacter->IsDead();
+}
+
+bool USpell_Heal::IsTargetValid() const
+{
+	if (bTargetParty)
+		return true; // 파티 전체 대상 — 개별 멤버 생사와 무관하게 항상 유효
+
+	return Target && !Target->IsDead();
 }
 
 void USpell_Heal::Cast_Success_Implementation()

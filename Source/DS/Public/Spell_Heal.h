@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #include "CoreMinimal.h"
@@ -16,6 +16,10 @@ public:
 	bool IsTargetValid_character_Implementation(UCharacterInstanceComponent* targetCharacter) override;
 	void SetTarget_character_Implementation(UCharacterInstanceComponent* targetCharacter) override { Target = targetCharacter; }
 
+	// bTargetParty면 개별 타겟 생사와 무관하게 항상 유효 (파티 전체가 대상이므로)
+	virtual bool IsTargetValid() const override;
+
+	virtual UCharacterInstanceComponent* FindReplacementTarget() override { return nullptr; }
 protected:
 	virtual void Cast_Success_Implementation() override;
 

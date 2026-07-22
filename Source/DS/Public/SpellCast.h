@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 
 #include "CoreMinimal.h"
@@ -28,10 +28,13 @@ public:
 	virtual void StartAction_Implementation() override;
 	virtual void ExecuteAction_Implementation() override;
 
+	int32 GetSpellLevel() const { return SpellLevel; }
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<USpell> heldSpell;
 
 	UPROPERTY(BlueprintReadOnly)
 	int32 SpellLevel = 1;
+
+	FTimerHandle SpellCastTimerHandle;
 };

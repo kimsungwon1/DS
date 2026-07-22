@@ -20,6 +20,7 @@ enum class ENPCBattleAction : uint8
 
 class UDSNPCCharacterData;
 class USpell;
+class UDSSpellData;
 class ADSNPCParty;
 
 USTRUCT(Blueprintable, BlueprintType)
@@ -72,8 +73,9 @@ protected:
 	virtual void InitializeCharacter_Implementation();
 
 protected:
+	// 이 NPC가 아는 스펠들 (SpellClass는 여기서 물고 있는 UDSSpellData가 들고 있음)
 	UPROPERTY(EditAnywhere)
-	TArray<TSoftClassPtr<USpell>> ableSpellsCandidates;
+	TArray<TObjectPtr<UDSSpellData>> ableSpellsCandidates;
 
 	UPROPERTY(BlueprintReadWrite)
 	TArray<TObjectPtr<USpell>> ableSpells;

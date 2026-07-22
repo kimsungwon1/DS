@@ -20,6 +20,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetSpellData(UDSSpellData* InSpellData);
 
+	// 선택 상태 설정 — 선택되면 Cyan, 해제되면 White로 복귀
+	UFUNCTION(BlueprintCallable)
+	void SetSelected(bool bInSelected);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsSelected() const { return bSelected; }
+
+	UFUNCTION(BlueprintCallable)
+	UDSSpellData* GetSpellData() const { return SpellData; }
+
 	UPROPERTY(BlueprintAssignable)
 	FOnSpellEntryClicked OnSpellEntryClicked;
 
@@ -28,6 +38,14 @@ protected:
 
 	UFUNCTION()
 	void HandleClicked();
+
+	UFUNCTION()
+	void HandleHovered();
+
+	UFUNCTION()
+	void HandleUnhovered();
+
+	void ApplyTextColor(const FLinearColor& Color);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -42,4 +60,6 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<UDSSpellData> SpellData;
+
+	bool bSelected = false;
 };

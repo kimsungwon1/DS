@@ -4,9 +4,10 @@
 #include "DSCharacterBaseData.h"
 
 const int32 FCharacterStat::STANDARD = 8;
+const int32 FSkillStat::STANDARD = 0;
 
 UDSCharacterBaseData::UDSCharacterBaseData()
 {
 	BaseFaceStat.Health = BaseFaceStat.MaxHP;
-	BaseFaceStat.Health = BaseFaceStat.MaxSP;
+	BaseFaceStat.CurrentSP = BaseFaceStat.MaxSP;
 }

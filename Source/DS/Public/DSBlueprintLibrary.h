@@ -26,7 +26,7 @@ class DS_API UDSBlueprintLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintPure, Category = "Combat")
-	static float GetDefaultReachDistance() { return 100.0f; }
+	static float GetDefaultReachDistance() { return 200.0f; }
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	static float GetCombatStartDistance() { return 600.0f; }

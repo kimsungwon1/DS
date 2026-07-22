@@ -26,5 +26,5 @@ private:
 	TArray<TObjectPtr<UDSSpellData>> AllSpells;
 
 	// 에셋 경로 — 에디터에서 Config 에셋 만든 뒤 경로 맞춰줘라
-	static constexpr const TCHAR* ConfigAssetPath = TEXT("/Game/Data/Spells/DA_SpellRegistryConfig");
+	static constexpr const TCHAR* ConfigAssetPath = TEXT("/Game/Made/Spells/Datas/SpellRegistryConfig");
 };

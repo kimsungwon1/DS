@@ -190,13 +190,13 @@ int UCharacterInstanceComponent::CalculateSpellDamage_Implementation(UCharacterI
 
 	// 피해자 원소 저항 적용
 	int32 Resistance = 0;
-	switch (SpellData->Element)
+	switch (SpellData->spellStat.element)
 	{
-		case ESpellElement::Aether: Resistance = FinalFaceStat.ResistAether; break;
-		case ESpellElement::Water:  Resistance = FinalFaceStat.ResistWater;  break;
-		case ESpellElement::Air:    Resistance = FinalFaceStat.ResistAir;    break;
-		case ESpellElement::Earth:  Resistance = FinalFaceStat.ResistEarth;  break;
-		case ESpellElement::Sun:    Resistance = FinalFaceStat.ResistSun;    break;
+		case ESpellElement::Aether: Resistance = FinalFaceStat.Resistance.ResistAether; break;
+		case ESpellElement::Water:  Resistance = FinalFaceStat.Resistance.ResistWater;  break;
+		case ESpellElement::Air:    Resistance = FinalFaceStat.Resistance.ResistAir;    break;
+		case ESpellElement::Earth:  Resistance = FinalFaceStat.Resistance.ResistEarth;  break;
+		case ESpellElement::Sun:    Resistance = FinalFaceStat.Resistance.ResistSun;    break;
 	}
 
 	int32 FinalDamage = FMath::Max(0, FMath::RoundToInt(BaseDamage * AttackerBonus) - Resistance);
