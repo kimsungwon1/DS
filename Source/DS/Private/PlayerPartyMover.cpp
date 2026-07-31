@@ -3,6 +3,7 @@
 #include "PlayerPartyMover.h"
 #include "PlayerCharacterInstanceComponent.h"
 #include "PlayerPartyManagerComponent.h"
+#include "DSKeyRingComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -46,6 +47,7 @@ APlayerPartyMover::APlayerPartyMover()
 
 	playerCharacterManager = CreateDefaultSubobject<UPlayerPartyManagerComponent>(TEXT("PlayerCharacters"));
 	timelineComp = CreateDefaultSubobject<UTimelineComponent>(TEXT("TimelineComponent"));
+	KeyRing = CreateDefaultSubobject<UDSKeyRingComponent>(TEXT("KeyRing"));
 
 	// 캐릭터 캡슐 5개 생성
 	// [0]은 ACharacter 기본 루트 캡슐을 재사용

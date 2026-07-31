@@ -16,6 +16,7 @@ class UDSMainWidget;
 class UPlayerCharacterInstanceComponent;
 class ASelector;
 class UDSAction;
+class UDSDefeatScreenWidget;
 struct FInputActionValue;
 
 /**
@@ -36,10 +37,13 @@ public:
 	void EndBattle();
 
 	UFUNCTION(BlueprintCallable)
-	void EnterHomeBase();
+	void EnterHomeBase(bool bAfterDefeat = false);
 
 	UFUNCTION(BlueprintCallable)
 	void ExitHomeBase();
+
+	UFUNCTION(BlueprintCallable)
+	void PlayerDefeated();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	APlayerPartyMover* GetPlayerParty();
@@ -138,6 +142,10 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite)
 	UDSMainWidget* mainWidget;
+
+	// 파티 전멸 시 PlayerDefeated()에서 바로 뷰포트에 띄우는 저승사자 화면 (DSG_DefeatScreen)
+	UPROPERTY(EditDefaultsOnly, Category = "Battle")
+	TSubclassOf<UDSDefeatScreenWidget> DefeatScreenClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsCursorVisible = true;

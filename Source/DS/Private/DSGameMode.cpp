@@ -13,6 +13,7 @@
 #include "Attack.h"
 #include "DSSaveGameSubsystem.h"
 #include "PlayerPartyManagerComponent.h"
+#include "TimerManager.h"
 
 ADSGameMode::ADSGameMode()
 	: AGameModeBase(), pcMemberColors{FColor::Red, FColor::Green, FColor::Purple, FColor::Blue, FColor::Orange, FColor::Yellow}
@@ -132,7 +133,7 @@ void ADSGameMode::EndCycle_Implementation()
 	DecideCharactersAction();
 }
 
-void ADSGameMode::EnterHomeBase_Implementation()
+void ADSGameMode::EnterHomeBase_Implementation(bool bAfterDefeat)
 {
 	// 뭔가에 의해 두 번 불려도(문 상호작용 중복 등) 홈 위젯이 겹쳐서 또 뜨지 않도록 방지
 	if (bIsInHomeBase)
@@ -148,7 +149,7 @@ void ADSGameMode::EnterHomeBase_Implementation()
 
 	auto* dsp = GetDSPlayerController();
 
-	dsp->EnterHomeBase();
+	dsp->EnterHomeBase(bAfterDefeat);
 }
 
 void ADSGameMode::ExitHomeBase_Implementation()
@@ -177,10 +178,45 @@ void ADSGameMode::ExitHomeBase_Implementation()
 	dsp->ExitHomeBase();
 }
 
+float ADSGameMode::GetNpcDistanceToTarget(const UNPCCharacterInstanceComponent* Npc)
+{
+	if (!Npc)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	const UAttack* CurrentAttack = Cast<UAttack>(Npc->GetCurrentAction());
+	const UCharacterInstanceComponent* AttackTarget = CurrentAttack ? CurrentAttack->GetTarget() : nullptr;
+
+	const AActor* NpcActor = Npc->GetOwner();
+	const AActor* TargetActor = AttackTarget ? AttackTarget->GetOwner() : nullptr;
+
+	if (!NpcActor || !TargetActor)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	return FVector::Dist(NpcActor->GetActorLocation(), TargetActor->GetActorLocation());
+}
+
 void ADSGameMode::SortCharacters()
 {
-	// arrCharactersInTurn을 speed대로 정렬.
-	arrCharactersInTurn.Sort([](const UCharacterInstanceComponent& A, const UCharacterInstanceComponent& B) { return A.FinalSpeed > B.FinalSpeed; });
+	// 플레이어 캐릭터는 기존대로 속도(FinalSpeed) 내림차순.
+	// NPC끼리는 속도 대신 공격 타겟까지의 거리가 가까운 순으로 정렬 (타겟에 가까운 NPC가 먼저 행동)
+	// TODO: 지금은 근접(UAttack) 기준 거리 정렬만 있음 - 원거리/마법(USpellCast) NPC는 거리 계산이 안 돼서
+	// 그냥 맨 뒤로 밀림. 나중엔 근접 NPC는 거리로, 원거리/마법 NPC는 속도로 정렬하게 나눠야 함
+	arrCharactersInTurn.Sort([](const UCharacterInstanceComponent& A, const UCharacterInstanceComponent& B)
+	{
+		const UNPCCharacterInstanceComponent* NpcA = Cast<UNPCCharacterInstanceComponent>(&A);
+		const UNPCCharacterInstanceComponent* NpcB = Cast<UNPCCharacterInstanceComponent>(&B);
+
+		if (NpcA && NpcB)
+		{
+			return GetNpcDistanceToTarget(NpcA) < GetNpcDistanceToTarget(NpcB);
+		}
+
+		return A.FinalSpeed > B.FinalSpeed;
+	});
 }
 
 void ADSGameMode::SwitchTurn_Implementation()
@@ -223,6 +259,43 @@ void ADSGameMode::SwitchTurn_Implementation()
 
 void ADSGameMode::PlayerDefeated_Implementation()
 {
+	UE_LOG(LogTemp, Log, TEXT("Mode: player party is defeated"));
+
+	if (ADSPlayerController* dsp = GetDSPlayerController())
+	{
+		dsp->PlayerDefeated();
+	}
+}
+
+void ADSGameMode::ReturnToHomeBaseAfterDefeat()
+{
+	// 저승사자 화면이 잠깐이라도 혼자 보이도록, 홈 복귀(파티 정리 + EnterHomeBase)는 살짝 늦춰서 실행
+	GetWorld()->GetTimerManager().SetTimer(
+		DefeatToHomeBaseTimerHandle,
+		this,
+		&ADSGameMode::DoReturnToHomeBaseAfterDefeat,
+		DefeatToHomeBaseDelay,
+		false
+	);
+}
+
+void ADSGameMode::DoReturnToHomeBaseAfterDefeat()
+{
+	if (UPlayerPartyManagerComponent* Manager = GetPartyManager())
+	{
+		if (ADSPlayerParty* Party = GetPartyObject())
+		{
+			for (int32 i = 0; i < Party->characters.Num(); ++i)
+			{
+				if (Party->characters[i])
+				{
+					Manager->RemoveCharacterFromParty(i);
+				}
+			}
+		}
+	}
+
+	EnterHomeBase(true);
 }
 
 void ADSGameMode::PushFocus(UObject* focusee)

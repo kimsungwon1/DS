@@ -22,13 +22,13 @@
 
 namespace
 {
-	FString GetProfessionDisplayNameLocal(EProfession Value)
+	FString GetProfessionDisplayNameLocal_GatherParty(EProfession Value)
 	{
 		const UEnum* EnumPtr = StaticEnum<EProfession>();
 		return EnumPtr ? EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(Value)).ToString() : FString();
 	}
 
-	FString GetRaceDisplayNameLocal(ERace Value)
+	FString GetRaceDisplayNameLocal_GatherParty(ERace Value)
 	{
 		const UEnum* EnumPtr = StaticEnum<ERace>();
 		return EnumPtr ? EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(Value)).ToString() : FString();
@@ -290,8 +290,8 @@ void UDSGatherPartyWidget::ApplyCharacterToCenterColumn(const FPlayerCharacterSa
 	}
 
 	if (CharNameText) CharNameText->SetText(FText::FromName(Data.characterName));
-	if (CharClassText) CharClassText->SetText(FText::FromString(GetProfessionDisplayNameLocal(Data.Profession)));
-	if (CharRaceText) CharRaceText->SetText(FText::FromString(GetRaceDisplayNameLocal(Data.Race)));
+	if (CharClassText) CharClassText->SetText(FText::FromString(GetProfessionDisplayNameLocal_GatherParty(Data.Profession)));
+	if (CharRaceText) CharRaceText->SetText(FText::FromString(GetRaceDisplayNameLocal_GatherParty(Data.Race)));
 	if (CharAlignText) CharAlignText->SetText(FText::GetEmpty());
 
 	const FCharacterStat& Stat = Data.characterData.CharStat;

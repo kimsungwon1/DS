@@ -18,6 +18,8 @@
 #include "Components/PrimitiveComponent.h"
 #include "DSBlueprintLibrary.h"
 #include "Item.h"
+#include "DSDefeatScreenWidget.h"
+#include "DSGameMode.h"
 
 void ADSPlayerController::TransferCharacterToUI(int32 index, UPlayerCharacterInstanceComponent* data)
 {
@@ -135,11 +137,11 @@ void ADSPlayerController::EndBattle()
 	PartyMovableSwitch(true);
 }
 
-void ADSPlayerController::EnterHomeBase()
+void ADSPlayerController::EnterHomeBase(bool bAfterDefeat)
 {
 	if (mainWidget)
 	{
-		mainWidget->EnterHomeBase();
+		mainWidget->EnterHomeBase(bAfterDefeat);
 	}
 
 	PartyMovableSwitch(false);
@@ -148,6 +150,19 @@ void ADSPlayerController::EnterHomeBase()
 	if (!bIsCursorVisible)
 	{
 		OnCursorSwitch(FInputActionValue());
+	}
+}
+
+void ADSPlayerController::PlayerDefeated()
+{
+	if (DefeatScreenClass)
+	{
+		UDSDefeatScreenWidget::Show(this, DefeatScreenClass);
+	}
+
+	if (ADSGameMode* GameMode = GetWorld() ? GetWorld()->GetAuthGameMode<ADSGameMode>() : nullptr)
+	{
+		GameMode->ReturnToHomeBaseAfterDefeat();
 	}
 }
 

@@ -25,6 +25,11 @@ struct FCharacterSaveData
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat")
 	FCharacterStat CharStat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat")
+	bool bIsAlive = true;
+
+	bool IsAlive() const { return bIsAlive; }
 };
 
 USTRUCT(BlueprintType)

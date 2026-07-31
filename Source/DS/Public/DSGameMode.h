@@ -71,9 +71,10 @@ public:
 	void EndCycle();
 	virtual void EndCycle_Implementation();
 
+	// bAfterDefeat: 파티 전멸로 인한 복귀인지 - true면 BP에서 "포기하지 말라"는 메시지를 띄울 수 있음
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void EnterHomeBase();
-	virtual void EnterHomeBase_Implementation();
+	void EnterHomeBase(bool bAfterDefeat = false);
+	virtual void EnterHomeBase_Implementation(bool bAfterDefeat = false);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ExitHomeBase();
@@ -94,6 +95,11 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void PlayerDefeated();
 	void PlayerDefeated_Implementation();
+
+	// 전멸 직후 바로 호출됨(PlayerController가 저승사자 화면 띄우자마자) - 저승사자 화면이 잠깐
+	// 혼자 보이도록 DefeatToHomeBaseDelay만큼 있다가 실제 복귀(DoReturnToHomeBaseAfterDefeat)를 예약함
+	UFUNCTION(BlueprintCallable)
+	void ReturnToHomeBaseAfterDefeat();
 
 	UFUNCTION(BlueprintCallable)
 	void PushFocus(UObject* focusee);
@@ -135,6 +141,19 @@ public:
 protected:
 	void DecideCharactersAction();
 	bool IsBattleEnded();
+
+	// NPC가 공격하려는 타겟까지의 거리 - 타겟/액터가 없으면 아주 큰 값을 반환해서 정렬 시 맨 뒤로 밀려나게 함
+	static float GetNpcDistanceToTarget(const class UNPCCharacterInstanceComponent* Npc);
+
+	// ReturnToHomeBaseAfterDefeat()가 예약한 실제 작업 - 파티 정리 + EnterHomeBase(true)
+	void DoReturnToHomeBaseAfterDefeat();
+
+protected:
+	// 전멸 후 저승사자 화면이 뜨고 나서 홈베이스로 실제로 복귀하기까지의 대기 시간(초)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Battle")
+	float DefeatToHomeBaseDelay = 2.f;
+
+	FTimerHandle DefeatToHomeBaseTimerHandle;
 
 protected:
 	UPROPERTY(BlueprintReadWrite)

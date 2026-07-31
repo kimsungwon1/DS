@@ -6,13 +6,13 @@
 
 namespace
 {
-	FString GetProfessionDisplayNameLocal(EProfession Value)
+	FString GetProfessionDisplayNameLocal_SaveEntry(EProfession Value)
 	{
 		const UEnum* EnumPtr = StaticEnum<EProfession>();
 		return EnumPtr ? EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(Value)).ToString() : FString();
 	}
 
-	FString GetRaceDisplayNameLocal(ERace Value)
+	FString GetRaceDisplayNameLocal_SaveEntry(ERace Value)
 	{
 		const UEnum* EnumPtr = StaticEnum<ERace>();
 		return EnumPtr ? EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(Value)).ToString() : FString();
@@ -48,10 +48,10 @@ void UDSCharacterSaveEntryWidget::SetCharacterData(const FPlayerCharacterSaveDat
 	}
 	if (RosterEntryClass)
 	{
-		RosterEntryClass->SetText(FText::FromString(GetProfessionDisplayNameLocal(CharacterData.Profession)));
+		RosterEntryClass->SetText(FText::FromString(GetProfessionDisplayNameLocal_SaveEntry(CharacterData.Profession)));
 	}
 	if (RosterEntryRace)
 	{
-		RosterEntryRace->SetText(FText::FromString(GetRaceDisplayNameLocal(CharacterData.Race)));
+		RosterEntryRace->SetText(FText::FromString(GetRaceDisplayNameLocal_SaveEntry(CharacterData.Race)));
 	}
 }

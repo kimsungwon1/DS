@@ -32,9 +32,10 @@ public:
 	void EndBattle();
 	void EndBattle_Implementation() {}
 
+	// bAfterDefeat이 true면 파티 전멸로 인한 복귀 - "포기하지 말라"는 메시지를 여기서 추가로 띄우면 됨
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void EnterHomeBase();
-	void EnterHomeBase_Implementation() {}
+	void EnterHomeBase(bool bAfterDefeat);
+	void EnterHomeBase_Implementation(bool bAfterDefeat) {}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ExitHomeBase();

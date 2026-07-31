@@ -11,6 +11,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UPlayerCharacterInstanceComponent;
 class UPlayerPartyManagerComponent;
+class UDSKeyRingComponent;
 class ADSPlayerController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCapsuleAllocated, UPlayerCharacterInstanceComponent*, Player, int32, CapsuleIndex, int32, SlotIndex);
@@ -92,6 +93,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "RPG")
 	TObjectPtr<UPlayerPartyManagerComponent> playerCharacterManager;
+
+	// 파티가 소지한 열쇠 - 전멸하면 이 액터(파티)와 함께 그 자리에 남음
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RPG")
+	TObjectPtr<UDSKeyRingComponent> KeyRing;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UTimelineComponent> timelineComp;

@@ -36,7 +36,7 @@ public:
 	{
 		switch (RangeType)
 		{
-		case EWeaponRangeType::Short:    return 200.0f;
+		case EWeaponRangeType::Short:    return 250.0f;
 		case EWeaponRangeType::Extended: return 350.0f;
 		case EWeaponRangeType::Long:     return 1000.0f;
 		default:                         return 0.0f;

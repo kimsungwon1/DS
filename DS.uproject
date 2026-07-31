@@ -82,6 +82,10 @@
 		{
 			"Name": "UnrealMCP",
 			"Enabled": false
+		},
+		{
+			"Name": "MCPClientToolset",
+			"Enabled": true
 		}
 	]
 }
