@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interactable.h"
 #include "Item.generated.h"
 
 UCLASS(Abstract)
-class DS_API AItem : public AActor
+class DS_API AItem : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	

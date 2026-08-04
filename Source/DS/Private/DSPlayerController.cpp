@@ -20,6 +20,7 @@
 #include "Item.h"
 #include "DSDefeatScreenWidget.h"
 #include "DSGameMode.h"
+#include "Interactable.h"
 
 void ADSPlayerController::TransferCharacterToUI(int32 index, UPlayerCharacterInstanceComponent* data)
 {
@@ -106,7 +107,7 @@ void ADSPlayerController::BeginPlay()
 	bEnableClickEvents = false;
 }
 
-APlayerPartyMover* ADSPlayerController::GetPlayerParty()
+APlayerPartyMover* ADSPlayerController::GetPlayerPartyMover()
 {
 	APlayerPartyMover* retParty = party;
 	if (retParty == nullptr) {
@@ -231,7 +232,7 @@ void ADSPlayerController::OnLookAround(const FInputActionValue& Value)
 
 	FVector2D TurnVector = Value.Get<FVector2D>();
 
-	if (auto* playerParty = GetPlayerParty()) {
+	if (auto* playerParty = GetPlayerPartyMover()) {
 		playerParty->TurnAround(TurnVector);
 	}
 }
@@ -260,7 +261,7 @@ void ADSPlayerController::OnMove(const FInputActionValue& Value)
 
 void ADSPlayerController::OnJump(const FInputActionValue& Value)
 {
-	if (auto* MyCharacter = GetPlayerParty())
+	if (auto* MyCharacter = GetPlayerPartyMover())
 	{
 		MyCharacter->Jump();
 	}
@@ -293,13 +294,13 @@ void ADSPlayerController::OnCursorSwitch(const FInputActionValue& Value)
 
 void ADSPlayerController::OnRunShift(const FInputActionValue& Value)
 {
-	auto* player = GetPlayerParty();
+	auto* player = GetPlayerPartyMover();
 	player->GetCharacterMovement()->MaxWalkSpeed = 1200;
 }
 
 void ADSPlayerController::OnRunShiftFinished(const FInputActionValue& Value)
 {
-	auto* player = GetPlayerParty();
+	auto* player = GetPlayerPartyMover();
 	player->GetCharacterMovement()->MaxWalkSpeed = 600;
 }
 
@@ -335,31 +336,40 @@ void ADSPlayerController::OnClick_Implementation()
 	if (HoveredComponent.IsValid())
 	{
 		AActor* HitActor = HoveredComponent->GetOwner();
-
-		// AItem이면 그 액터의 GetDistanceToUse()(오버라이드 가능) 쓰고, 아니면 공용 기본값
-		float ReachDistance = UDSBlueprintLibrary::GetDefaultReachDistance();
-		if (AItem* HitItem = Cast<AItem>(HitActor))
+	
+		FText textToExpress = FText::GetEmpty();
+		if (HitActor->Implements<UInteractable>())
 		{
-			ReachDistance = HitItem->GetDistanceToUse();
-		}
+			IInteractable::Execute_Interact(HitActor, GetPlayerPartyMover(), textToExpress);
 
-		if (APawn* MyPawn = GetPawn())
-		{
-			// 컴포넌트 원점 대신 실제 클릭(트레이스 충돌) 지점을 씀 - 문처럼 긴 오브젝트는 원점이랑 꽤 떨어질 수 있음.
-			// Dist2D(수평만)는 위/아래층처럼 Z가 많이 다른 대상도 가깝다고 오판할 수 있어서 그냥 3D 직선거리 씀
-			const float Distance = FVector::Dist(MyPawn->GetActorLocation(), HoveredHitLocation);
-			if (Distance > ReachDistance)
-			{
-				// 너무 멀어서 상호작용 안 함
-				return;
-			}
-		}
+			// 나중에 메시지 표현하기.
 
-		HoveredComponent->OnClicked.Broadcast(HoveredComponent.Get(), EKeys::LeftMouseButton);
-		if (HitActor)
-		{
-			HitActor->OnClicked.Broadcast(HitActor, EKeys::LeftMouseButton);
 		}
+		
+		// // AItem이면 그 액터의 GetDistanceToUse()(오버라이드 가능) 쓰고, 아니면 공용 기본값
+		// float ReachDistance = UDSBlueprintLibrary::GetDefaultReachDistance();
+		// if (AItem* HitItem = Cast<AItem>(HitActor))
+		// {
+		// 	ReachDistance = HitItem->GetDistanceToUse();
+		// }
+		// 
+		// if (APawn* MyPawn = GetPawn())
+		// {
+		// 	// 컴포넌트 원점 대신 실제 클릭(트레이스 충돌) 지점을 씀 - 문처럼 긴 오브젝트는 원점이랑 꽤 떨어질 수 있음.
+		// 	// Dist2D(수평만)는 위/아래층처럼 Z가 많이 다른 대상도 가깝다고 오판할 수 있어서 그냥 3D 직선거리 씀
+		// 	const float Distance = FVector::Dist(MyPawn->GetActorLocation(), HoveredHitLocation);
+		// 	if (Distance > ReachDistance)
+		// 	{
+		// 		// 너무 멀어서 상호작용 안 함
+		// 		return;
+		// 	}
+		// }
+		// 
+		// HoveredComponent->OnClicked.Broadcast(HoveredComponent.Get(), EKeys::LeftMouseButton);
+		// if (HitActor)
+		// {
+		// 	HitActor->OnClicked.Broadcast(HitActor, EKeys::LeftMouseButton);
+		// }
 	}
 }
 
@@ -383,6 +393,18 @@ void ADSPlayerController::UpdateWorldObjectHover()
 	FHitResult Hit;
 	const bool bHit = GetHitResultUnderCursor(ECC_Visibility, /*bTraceComplex=*/false, Hit);
 	UPrimitiveComponent* NewHovered = bHit ? Hit.GetComponent() : nullptr;
+	AActor* nowOwner = nullptr;
+	TArray<UMeshComponent*> MeshComponents;
+
+	if (!Hit.GetActor() || !Hit.GetActor()->Implements<UInteractable>())
+	{
+		NewHovered = nullptr;
+	}
+
+	if (HoveredComponent.IsValid())
+	{
+		nowOwner = HoveredComponent->GetOwner();
+	}
 
 	// 같은 컴포넌트를 계속 호버 중이어도 커서가 그 표면 위에서 움직였을 수 있으니 매 틱 갱신
 	if (bHit)
@@ -390,17 +412,12 @@ void ADSPlayerController::UpdateWorldObjectHover()
 		HoveredHitLocation = Hit.ImpactPoint;
 	}
 
-	if (NewHovered == HoveredComponent.Get())
-	{
-		return;
-	}
-
 	if (HoveredComponent.IsValid())
 	{
 		HoveredComponent->OnEndCursorOver.Broadcast(HoveredComponent.Get());
-		if (AActor* OldOwner = HoveredComponent->GetOwner())
+		if (nowOwner)
 		{
-			OldOwner->OnEndCursorOver.Broadcast(OldOwner);
+			nowOwner->OnEndCursorOver.Broadcast(nowOwner);
 		}
 	}
 
@@ -413,7 +430,34 @@ void ADSPlayerController::UpdateWorldObjectHover()
 		}
 	}
 
+	if (nowOwner && (!bHit || !IInteractable::Execute_IsInteractable(nowOwner, GetPlayerPartyMover(), Hit.Distance)))
+	{
+		nowOwner->GetComponents<UMeshComponent>(MeshComponents);
+		for (UMeshComponent* m : MeshComponents)
+		{
+			m->SetRenderCustomDepth(false);
+		}
+	}
+
+	if (HoveredComponent != NewHovered && NewHovered)
+	{
+		nowOwner = NewHovered->GetOwner();	
+	}
+
 	HoveredComponent = NewHovered;
+
+	if (bHit && nowOwner && IInteractable::Execute_IsInteractable(nowOwner, GetPlayerPartyMover(), Hit.Distance))
+	{
+		nowOwner->GetComponents<UMeshComponent>(MeshComponents);
+		for (UMeshComponent* m : MeshComponents)
+		{
+			auto& Blendables = TargetVolume->Settings.WeightedBlendables.Array;
+			Blendables[0].Weight = 1.f;  // 평소 머티리얼
+			Blendables[1].Weight = 0.f;  // 빨간 머티리얼
+			
+			m->SetRenderCustomDepth(true);
+		}
+	}
 }
 
 void ADSPlayerController::OnActionSelected(UDSAction* action)

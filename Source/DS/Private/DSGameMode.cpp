@@ -83,7 +83,7 @@ void ADSGameMode::StartCycle_Implementation()
 
 	OnCycleStarted.Broadcast(bIsCycle);
 
-	ADSParty* pp = GetDSPlayerController()->GetPlayerParty()->GetParty();
+	ADSParty* pp = GetDSPlayerController()->GetPlayerPartyMover()->GetParty();
 	for (UCharacterInstanceComponent* pc : pp->GetCharacters())
 	{
 		if (pc == nullptr)
@@ -429,7 +429,7 @@ APlayerPartyMover* ADSGameMode::GetPartyMover()
 {
 	if (partyMover == nullptr)
 	{
-		partyMover = GetDSPlayerController()->GetPlayerParty();
+		partyMover = GetDSPlayerController()->GetPlayerPartyMover();
 	}
 
 	return partyMover;

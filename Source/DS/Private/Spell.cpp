@@ -66,7 +66,7 @@ UCharacterInstanceComponent* USpell::FindReplacementTarget()
 	TArray<ADSParty*> AllParties;
 	if (ADSPlayerController* PC = GameMode->GetDSPlayerController())
 	{
-		if (APlayerPartyMover* Mover = PC->GetPlayerParty())
+		if (APlayerPartyMover* Mover = PC->GetPlayerPartyMover())
 			AllParties.Add(Mover->GetParty());
 	}
 	for (ADSNPCParty* NpcParty : GameMode->GetNpcParties())

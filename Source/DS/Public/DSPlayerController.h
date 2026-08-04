@@ -46,7 +46,7 @@ public:
 	void PlayerDefeated();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	APlayerPartyMover* GetPlayerParty();
+	APlayerPartyMover* GetPlayerPartyMover();
 
 	UDSMainWidget* GetMainWidget() { return mainWidget; }
 

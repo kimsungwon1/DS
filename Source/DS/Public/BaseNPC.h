@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
 #include "Components/WidgetComponent.h"
+#include "Interactable.h"
 #include "BaseNPC.generated.h"
 
 class UDSNPCCharacterInstance;
 class UNPCCharacterInstanceComponent;
 
 UCLASS(Abstract)
-class DS_API ABaseNPC : public ABaseCharacter
+class DS_API ABaseNPC : public ABaseCharacter, public IInteractable
 {
 	GENERATED_BODY()
 

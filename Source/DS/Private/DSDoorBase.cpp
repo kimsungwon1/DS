@@ -1,11 +1,39 @@
-
+﻿
 
 #include "DSDoorBase.h"
 #include "DSKeyRingComponent.h"
+#include "DSBlueprintLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerPartyMover.h"
 
 ADSDoorBase::ADSDoorBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+
+	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = Root;
+
+	DoorLeafRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DoorLeafRoot"));
+	DoorLeafRoot->SetupAttachment(RootComponent);
+}
+
+void ADSDoorBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!DoorLeafRoot)
+	{
+		return;
+	}
+
+	FRotator CurrentRot = DoorLeafRoot->GetRelativeRotation();
+	if (FMath::IsNearlyEqual(CurrentRot.Yaw, TargetYaw, 0.05f))
+	{
+		return;
+	}
+
+	CurrentRot.Yaw = FMath::FInterpTo(CurrentRot.Yaw, TargetYaw, DeltaTime, RotationInterpSpeed);
+	DoorLeafRoot->SetRelativeRotation(CurrentRot);
 }
 
 bool ADSDoorBase::CanOpen(AActor* Interactor) const
@@ -81,6 +109,7 @@ bool ADSDoorBase::TryOpen(AActor* Interactor)
 void ADSDoorBase::Open_Implementation()
 {
 	bIsOpen = true;
+	TargetYaw = OpenYaw;
 }
 
 void ADSDoorBase::Close_Implementation()
@@ -91,4 +120,29 @@ void ADSDoorBase::Close_Implementation()
 	}
 
 	bIsOpen = false;
+	TargetYaw = 0.0f;
+}
+
+bool ADSDoorBase::IsInteractable_Implementation(APlayerPartyMover* ppm, float distance)
+{
+	return distance <= UDSBlueprintLibrary::GetDefaultReachDistance();
+}
+
+bool ADSDoorBase::Interact_Implementation(APlayerPartyMover* ppm, FText& textToExpress)
+{
+	if (!ppm)
+	{
+		return false;
+	}
+
+	// 열려있으면 닫기 시도(bStaysOpenForever면 Close 내부에서 무시됨), 닫혀있으면 열기 시도
+	if (bIsOpen)
+	{
+		Close();
+	}
+	else
+	{
+		TryOpen(ppm);
+	}
+	return true;
 }

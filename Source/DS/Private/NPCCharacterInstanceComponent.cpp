@@ -118,7 +118,7 @@ void UNPCCharacterInstanceComponent::DecideAttack(ADSGameMode* md)
 
 	if (npcParty->bIsHostile)
 	{
-		auto* playerParty = md->GetDSPlayerController()->GetPlayerParty()->GetParty();
+		auto* playerParty = md->GetDSPlayerController()->GetPlayerPartyMover()->GetParty();
 
 		parties.Add(playerParty);
 
